@@ -15,26 +15,24 @@
   margin-bottom: 24px;
 }
 
-.profile-avatar {
+.profile-photo-img {
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background-color: var(--primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  object-fit: cover;
   margin-bottom: 12px;
+  border: 2px solid var(--primary);
 }
 
 .profile-name {
   font-size: 18px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   color: var(--text-main);
 }
 
-.edit-hint {
-  font-size: 12px;
+.profile-email {
+  font-size: 13px;
   color: var(--text-muted);
 }
 
@@ -87,7 +85,30 @@
   margin-top: 20px;
   height: 52px;
   border-radius: 16px;
-  margin-bottom: 30px;
+  margin-bottom: 12px;
+}
+
+.btn-signout {
+  width: 100%;
+  height: 52px;
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 40px;
+}
+
+.settings-loading {
+  height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .input-label {

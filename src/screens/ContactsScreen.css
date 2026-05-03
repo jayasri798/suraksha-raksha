@@ -90,3 +90,10 @@
   margin-top: 40px;
   font-size: 14px;
 }
+
+.contacts-loading {
+  height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

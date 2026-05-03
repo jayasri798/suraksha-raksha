@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, AlertTriangle, XCircle, Phone, MessageCircle, Lock, MapPin } from 'lucide-react';
+import { Shield, AlertTriangle, Lock, MapPin, Loader2 } from 'lucide-react';
+import { db } from '../firebase';
+import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import './HomeScreen.css';
 
-const HomeScreen = () => {
+const HomeScreen = ({ user }) => {
   const [isSOSActive, setIsSOSActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [location, setLocation] = useState(null);
   const [contacts, setContacts] = useState([]);
-  const [userName, setUserName] = useState('');
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showPinPrompt, setShowPinPrompt] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [error, setError] = useState('');
@@ -17,18 +20,30 @@ const HomeScreen = () => {
   const holdTimerRef = useRef(null);
 
   useEffect(() => {
-    const settings = localStorage.getItem('safeher_settings');
-    if (settings) {
-      const { name } = JSON.parse(settings);
-      setUserName(name || '');
-    }
-    const savedContacts = localStorage.getItem('safeher_contacts');
-    if (savedContacts) setContacts(JSON.parse(savedContacts));
-  }, []);
+    const fetchData = async () => {
+      try {
+        // Fetch user settings
+        const userDoc = await getDoc(doc(db, "users", user.uid));
+        if (userDoc.exists()) {
+          setSettings(userDoc.data());
+        }
+
+        // Fetch contacts
+        const contactsSnap = await getDocs(collection(db, "users", user.uid, "contacts"));
+        const contactsList = contactsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setContacts(contactsList);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user.uid]);
 
   useEffect(() => {
     if (isSOSActive) {
-      setCountdown(10);
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => setLocation({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }),
@@ -39,12 +54,37 @@ const HomeScreen = () => {
     }
   }, [isSOSActive]);
 
+  const openWhatsApp = () => {
+    const msgTemplate = "EMERGENCY! [user.displayName] needs help!\nLocation: https://maps.google.com/?q=[LAT],[LNG]\nPlease call police immediately! - SafeHer";
+    let message = msgTemplate
+      .replace('[user.displayName]', user.displayName)
+      .replace('[LAT]', location?.lat || '0')
+      .replace('[LNG]', location?.lng || '0');
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  };
+
+  const triggerSOS = async () => {
+    // Save to Firestore
+    try {
+      await addDoc(collection(db, "users", user.uid, "sos_alerts"), {
+        location: location,
+        timestamp: serverTimestamp(),
+        userName: user.displayName,
+        status: 'active'
+      });
+    } catch (err) {
+      console.error("Error logging SOS:", err);
+    }
+
+    openWhatsApp();
+  };
+
   useEffect(() => {
     let timer;
     if (isSOSActive && countdown > 0 && !showPinPrompt) {
       timer = setInterval(() => setCountdown(prev => prev - 1), 1000);
     } else if (isSOSActive && countdown === 0) {
-      openWhatsApp();
+      triggerSOS();
     }
     return () => clearInterval(timer);
   }, [isSOSActive, countdown, showPinPrompt]);
@@ -52,6 +92,7 @@ const HomeScreen = () => {
   const startHold = () => {
     setIsHolding(true);
     holdTimerRef.current = setTimeout(() => {
+      setCountdown(10);
       setIsSOSActive(true);
       setIsHolding(false);
     }, 3000);
@@ -62,25 +103,14 @@ const HomeScreen = () => {
     setIsHolding(false);
   };
 
-  const openWhatsApp = () => {
-    const settings = JSON.parse(localStorage.getItem('safeher_settings') || '{}');
-    const msgTemplate = settings.emergencyMessage || "EMERGENCY! [User Name] needs help! \nLocation: [GPS LINK] \n- SafeHer";
-    let message = msgTemplate
-      .replace('[User Name]', userName || 'User')
-      .replace('[GPS LINK]', `https://maps.google.com/?q=${location?.lat},${location?.lng}`);
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
-  };
-
   const handleCancelRequest = () => {
-    const settings = JSON.parse(localStorage.getItem('safeher_settings') || '{}');
-    if (settings.pin) setShowPinPrompt(true);
+    if (settings?.pin) setShowPinPrompt(true);
     else setIsSOSActive(false);
   };
 
   const handlePinSubmit = (e) => {
     e.preventDefault();
-    const settings = JSON.parse(localStorage.getItem('safeher_settings') || '{}');
-    if (pinInput === settings.pin) {
+    if (pinInput === settings?.pin) {
       setIsSOSActive(false);
       setShowPinPrompt(false);
       setError('');
@@ -90,10 +120,20 @@ const HomeScreen = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="home-screen-loading">
+        <Loader2 className="spinner" size={40} />
+      </div>
+    );
+  }
+
+  const firstName = user.displayName?.split(' ')[0] || 'User';
+
   return (
     <div className="home-screen">
       <div className="greeting-card">
-        <h2>Stay Safe</h2>
+        <h2>Stay Safe, {firstName}</h2>
         <p>Help is one press away</p>
       </div>
 
@@ -148,9 +188,11 @@ const HomeScreen = () => {
               <div className="notified-section">
                 <p>Notified:</p>
                 <div className="pills-container">
-                  {contacts.map((c, i) => (
+                  {contacts.length > 0 ? contacts.map((c, i) => (
                     <span key={i} className="contact-pill">{c.name}</span>
-                  ))}
+                  )) : (
+                    <span className="contact-pill">Emergency Services</span>
+                  )}
                 </div>
               </div>
 

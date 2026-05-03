@@ -1,21 +1,34 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Shield } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Shield, Loader2 } from 'lucide-react';
+import { auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import BottomNavigation from './components/BottomNavigation';
 import HomeScreen from './screens/HomeScreen';
 import ContactsScreen from './screens/ContactsScreen';
 import LiveLocationScreen from './screens/LiveLocationScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import SplashScreen from './components/SplashScreen';
+import LoginScreen from './screens/LoginScreen';
 import './App.css';
 
 function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [isConnected, setIsConnected] = useState(true);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isConnected] = useState(true);
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('safeher-darkmode');
     return saved === 'true';
   });
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Apply theme
@@ -36,6 +49,18 @@ function App() {
     return <SplashScreen />;
   }
 
+  if (authLoading) {
+    return (
+      <div className="loading-screen">
+        <Loader2 className="spinner-large" size={48} />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen />;
+  }
+
   return (
     <Router>
       <header className="app-top-bar">
@@ -53,10 +78,11 @@ function App() {
 
       <div className="screen-container">
         <Routes>
-          <Route path="/" element={<HomeScreen />} />
-          <Route path="/contacts" element={<ContactsScreen />} />
-          <Route path="/location" element={<LiveLocationScreen />} />
-          <Route path="/settings" element={<SettingsScreen isDark={isDark} setIsDark={setIsDark} />} />
+          <Route path="/" element={<HomeScreen user={user} />} />
+          <Route path="/contacts" element={<ContactsScreen user={user} />} />
+          <Route path="/location" element={<LiveLocationScreen user={user} />} />
+          <Route path="/settings" element={<SettingsScreen user={user} isDark={isDark} setIsDark={setIsDark} />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
       <BottomNavigation />

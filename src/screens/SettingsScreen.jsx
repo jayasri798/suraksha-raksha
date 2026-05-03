@@ -1,30 +1,68 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Lock, MessageSquare, Info, Save } from 'lucide-react';
+import { Lock, MessageSquare, Info, Save, LogOut, Loader2 } from 'lucide-react';
+import { auth, db } from '../firebase';
+import { signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import './SettingsScreen.css';
 
-const SettingsScreen = ({ isDark, setIsDark }) => {
-  const [name, setName] = useState('');
+const SettingsScreen = ({ user, isDark, setIsDark }) => {
   const [pin, setPin] = useState('');
-  const [msg, setMsg] = useState('EMERGENCY! [User Name] needs help! \nLocation: [GPS LINK] \n- SafeHer');
+  const [msg, setMsg] = useState('EMERGENCY! [user.displayName] needs help!\nLocation: https://maps.google.com/?q=[LAT],[LNG]\nPlease call police immediately! - SafeHer');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const settings = localStorage.getItem('safeher_settings');
-    if (settings) {
-      const p = JSON.parse(settings);
-      setName(p.name || '');
-      setPin(p.pin || '');
-      setMsg(p.emergencyMessage || msg);
-    }
-  }, []);
+    const fetchSettings = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, "users", user.uid));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setPin(data.pin || '');
+          setMsg(data.emergencyMessage || msg);
+        }
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleSave = () => {
-    const settings = { name, pin, emergencyMessage: msg, darkMode: isDark };
-    localStorage.setItem('safeher_settings', JSON.stringify(settings));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    fetchSettings();
+  }, [user.uid]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await setDoc(doc(db, "users", user.uid), {
+        name: user.displayName,
+        email: user.email,
+        pin,
+        emergencyMessage: msg,
+        darkMode: isDark
+      }, { merge: true });
+      
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error("Error saving settings:", err);
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleSignOut = () => {
+    signOut(auth);
+  };
+
+  if (loading) {
+    return (
+      <div className="settings-loading">
+        <Loader2 className="spinner" size={40} />
+      </div>
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="settings-screen">
@@ -34,19 +72,16 @@ const SettingsScreen = ({ isDark, setIsDark }) => {
       </div>
 
       <div className="card profile-card">
-        <div className="profile-avatar">
-          <User size={32} color="white" />
-        </div>
-        <h3 className="profile-name">{name || 'Guest User'}</h3>
-        <p className="edit-hint">Tap to edit name below</p>
+        <img 
+          src={user.photoURL} 
+          alt={user.displayName} 
+          className="profile-photo-img" 
+        />
+        <h3 className="profile-name">{user.displayName}</h3>
+        <p className="profile-email">{user.email}</p>
       </div>
 
       <div className="settings-list">
-        <div className="card settings-item-card">
-          <label className="input-label"><User size={14} /> Your Name</label>
-          <input type="text" className="input-field" value={name} onChange={e => setName(e.target.value)} placeholder="Enter your name" />
-        </div>
-
         <div className="card settings-item-card">
           <label className="input-label"><Lock size={14} /> Cancel PIN (4 digits)</label>
           <input type="password" className="input-field" maxLength="4" value={pin} onChange={e => setPin(e.target.value)} placeholder="0000" />
@@ -56,7 +91,7 @@ const SettingsScreen = ({ isDark, setIsDark }) => {
         <div className="card settings-item-card">
           <label className="input-label"><MessageSquare size={14} /> Emergency Message</label>
           <textarea className="input-field" rows="4" value={msg} onChange={e => setMsg(e.target.value)} />
-          <p className="helper-text">Use [User Name] and [GPS LINK]</p>
+          <p className="helper-text">Use [user.displayName] and [LAT], [LNG]</p>
         </div>
 
         <div className="card settings-item-card toggle-card">
@@ -79,8 +114,12 @@ const SettingsScreen = ({ isDark, setIsDark }) => {
         </div>
       </div>
 
-      <button className="btn-primary save-settings-btn" onClick={handleSave}>
-        <Save size={20} /> {saved ? 'Saved!' : 'Save Settings'}
+      <button className="btn-primary save-settings-btn" onClick={handleSave} disabled={saving}>
+        {saving ? <Loader2 className="spinner" size={20} /> : <><Save size={20} /> {saved ? 'Saved!' : 'Save Settings'}</>}
+      </button>
+
+      <button className="btn-signout" onClick={handleSignOut}>
+        <LogOut size={20} /> Sign Out
       </button>
     </motion.div>
   );

@@ -20,7 +20,8 @@ const LiveLocationScreen = () => {
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
           const data = await res.json();
           setAddress(data.display_name || 'Address not found');
-        } catch (e) {
+        } catch (error) {
+          console.error(error);
           setAddress('Failed to fetch address');
         }
       },
@@ -29,7 +30,11 @@ const LiveLocationScreen = () => {
     );
   };
 
-  useEffect(() => { fetchLocation(); }, []);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const shareLocation = () => {
     if (!location) return;
