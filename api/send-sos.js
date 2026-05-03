@@ -1,5 +1,3 @@
-import twilio from 'twilio';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -11,32 +9,33 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing phones or message' });
   }
   
-  const client = twilio(
-    process.env.TWILIO_ACCOUNT_SID,
-    process.env.TWILIO_AUTH_TOKEN
-  );
-
   const results = [];
+  
   for (const phone of phones) {
     try {
-      let formattedPhone = phone.replace(/[\s\-\+]/g, '');
-      if (formattedPhone.startsWith('91') && formattedPhone.length === 12) {
-        formattedPhone = formattedPhone.substring(2);
+      let cleaned = phone.replace(/[\s\-\+]/g, '');
+      if (cleaned.startsWith('91') && cleaned.length === 12) {
+        cleaned = cleaned.substring(2);
       }
       
-      const msg = await client.messages.create({
-        body: message,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: `+91${formattedPhone}`
+      const response = await fetch('https://textbelt.com/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: `+91${cleaned}`,
+          message: message,
+          key: 'textbelt' // Use 'textbelt' for free tier or provide a real key if needed
+        })
       });
       
-      console.log(`Twilio: SMS sent to ${phone}, SID: ${msg.sid}`);
-      results.push({ phone, success: true, sid: msg.sid });
+      const data = await response.json();
+      console.log(`Textbelt Response for ${phone}:`, data);
+      results.push({ phone, success: data.success, textId: data.textId });
     } catch (error) {
-      console.error(`Twilio Error for ${phone}:`, error.message);
+      console.error(`Textbelt Error for ${phone}:`, error.message);
       results.push({ phone, success: false, error: error.message });
     }
   }
-
+  
   return res.status(200).json({ success: true, results });
 }
