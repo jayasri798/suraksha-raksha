@@ -2,10 +2,30 @@ import { useState, useEffect } from 'react';
 import { MapPin, RefreshCw, MessageCircle } from 'lucide-react';
 import './LiveLocationScreen.css';
 
-const LiveLocationScreen = () => {
-  const [location, setLocation] = useState(null);
+const LiveLocationScreen = ({ globalLocation }) => {
+  const [location, setLocation] = useState(globalLocation);
   const [address, setAddress] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!globalLocation);
+
+  const fetchAddress = async (lat, lng) => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      const data = await res.json();
+      setAddress(data.display_name || 'Address not found');
+    } catch (error) {
+      console.error(error);
+      setAddress('Failed to fetch address');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (globalLocation) {
+      setLocation(globalLocation);
+      fetchAddress(globalLocation.lat, globalLocation.lng);
+    }
+  }, [globalLocation]);
 
   const fetchLocation = () => {
     setLoading(true);
@@ -14,27 +34,14 @@ const LiveLocationScreen = () => {
       async (pos) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
-        setLocation({ lat, lng });
-        setLoading(false);
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-          const data = await res.json();
-          setAddress(data.display_name || 'Address not found');
-        } catch (error) {
-          console.error(error);
-          setAddress('Failed to fetch address');
-        }
+        const newLoc = { lat, lng };
+        setLocation(newLoc);
+        fetchAddress(lat, lng);
       },
       () => setLoading(false),
       { enableHighAccuracy: true }
     );
   };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchLocation();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const shareLocation = () => {
     if (!location) return;
@@ -73,11 +80,11 @@ const LiveLocationScreen = () => {
         <div className="coords-row">
           <div className="coord-item">
             <span className="coord-label">Latitude</span>
-            <span className="coord-value">{location ? location.lat.toFixed(6) : '---'}</span>
+            <span className="coord-value">{location ? (typeof location.lat === 'number' ? location.lat.toFixed(6) : location.lat) : '---'}</span>
           </div>
           <div className="coord-item">
             <span className="coord-label">Longitude</span>
-            <span className="coord-value">{location ? location.lng.toFixed(6) : '---'}</span>
+            <span className="coord-value">{location ? (typeof location.lng === 'number' ? location.lng.toFixed(6) : location.lng) : '---'}</span>
           </div>
         </div>
         <p className="updated-text">Updated just now</p>

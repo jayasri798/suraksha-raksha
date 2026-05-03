@@ -17,6 +17,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [isConnected] = useState(true);
+  const [location, setLocation] = useState(null);
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('safeher-darkmode');
     return saved === 'true';
@@ -28,6 +29,23 @@ function App() {
       setAuthLoading(false);
     });
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Request permission and watch position
+    if ("geolocation" in navigator) {
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude.toFixed(6),
+            lng: position.coords.longitude.toFixed(6)
+          });
+        },
+        (error) => console.error("Error watching location:", error),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
   }, []);
 
   useEffect(() => {
@@ -78,9 +96,9 @@ function App() {
 
       <div className="screen-container">
         <Routes>
-          <Route path="/" element={<HomeScreen user={user} />} />
+          <Route path="/" element={<HomeScreen user={user} globalLocation={location} />} />
           <Route path="/contacts" element={<ContactsScreen user={user} />} />
-          <Route path="/location" element={<LiveLocationScreen user={user} />} />
+          <Route path="/location" element={<LiveLocationScreen user={user} globalLocation={location} />} />
           <Route path="/settings" element={<SettingsScreen user={user} isDark={isDark} setIsDark={setIsDark} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

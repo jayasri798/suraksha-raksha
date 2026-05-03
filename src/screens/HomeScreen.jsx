@@ -5,16 +5,18 @@ import { db } from '../firebase';
 import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import './HomeScreen.css';
 
-const HomeScreen = ({ user }) => {
+const HomeScreen = ({ user, globalLocation }) => {
   const [isSOSActive, setIsSOSActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState(globalLocation);
   const [contacts, setContacts] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showPinPrompt, setShowPinPrompt] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [error, setError] = useState('');
+  const [smsSent, setSmsSent] = useState(false);
+  const [toast, setToast] = useState({ show: false, msg: '', type: '' });
   
   const [isHolding, setIsHolding] = useState(false);
   const holdTimerRef = useRef(null);
@@ -22,61 +24,85 @@ const HomeScreen = ({ user }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch user settings
         const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setSettings(userDoc.data());
-        }
+        if (userDoc.exists()) setSettings(userDoc.data());
 
-        // Fetch contacts
         const contactsSnap = await getDocs(collection(db, "users", user.uid, "contacts"));
-        const contactsList = contactsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setContacts(contactsList);
+        setContacts(contactsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       } catch (err) {
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [user.uid]);
 
   useEffect(() => {
-    if (isSOSActive) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => setLocation({ lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6) }),
-          null,
-          { enableHighAccuracy: true }
-        );
-      }
-    }
-  }, [isSOSActive]);
+    setLocation(globalLocation);
+  }, [globalLocation]);
 
-  const openWhatsApp = () => {
-    const msgTemplate = "EMERGENCY! [user.displayName] needs help!\nLocation: https://maps.google.com/?q=[LAT],[LNG]\nPlease call police immediately! - SafeHer";
-    let message = msgTemplate
-      .replace('[user.displayName]', user.displayName)
-      .replace('[LAT]', location?.lat || '0')
-      .replace('[LNG]', location?.lng || '0');
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+  const showToast = (msg, type = 'success') => {
+    setToast({ show: true, msg, type });
+    setTimeout(() => setToast({ show: false, msg: '', type: '' }), 3000);
   };
 
-  const triggerSOS = async () => {
-    // Save to Firestore
-    try {
-      await addDoc(collection(db, "users", user.uid, "sos_alerts"), {
-        location: location,
-        timestamp: serverTimestamp(),
-        userName: user.displayName,
-        status: 'active'
-      });
-    } catch (err) {
-      console.error("Error logging SOS:", err);
+  const getRealLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocation({ 
+            lat: pos.coords.latitude.toFixed(6), 
+            lng: pos.coords.longitude.toFixed(6) 
+          });
+        },
+        (err) => console.error("GPS Error:", err),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+  };
+
+  const buildMessage = () => {
+    const lat = location?.lat || globalLocation?.lat || '0';
+    const lng = location?.lng || globalLocation?.lng || '0';
+    return `EMERGENCY! ${user.displayName} needs help!\nLocation: https://maps.google.com/?q=${lat},${lng}\nPlease go to this location immediately!\n- SafeHer Safety App`;
+  };
+
+  const sendSMS = async () => {
+    if (smsSent) return;
+    setSmsSent(true);
+    
+    const phoneNumbers = contacts.map(c => c.phone.replace(/\D/g, ''));
+    if (phoneNumbers.length === 0) {
+      console.warn("No contacts to notify");
+      return;
     }
 
-    openWhatsApp();
+    try {
+      const response = await fetch('/api/send-sos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phones: phoneNumbers,
+          message: buildMessage()
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Log to Firestore
+        await addDoc(collection(db, "users", user.uid, "sos_alerts"), {
+          location: location || globalLocation,
+          timestamp: serverTimestamp(),
+          userName: user.displayName,
+          status: 'sent'
+        });
+      } else {
+        console.error("SMS Failed:", data.error);
+      }
+    } catch (err) {
+      console.error("Error calling SMS API:", err);
+    }
   };
 
   useEffect(() => {
@@ -84,7 +110,7 @@ const HomeScreen = ({ user }) => {
     if (isSOSActive && countdown > 0 && !showPinPrompt) {
       timer = setInterval(() => setCountdown(prev => prev - 1), 1000);
     } else if (isSOSActive && countdown === 0) {
-      triggerSOS();
+      sendSMS();
     }
     return () => clearInterval(timer);
   }, [isSOSActive, countdown, showPinPrompt]);
@@ -93,8 +119,10 @@ const HomeScreen = ({ user }) => {
     setIsHolding(true);
     holdTimerRef.current = setTimeout(() => {
       setCountdown(10);
+      setSmsSent(false);
       setIsSOSActive(true);
       setIsHolding(false);
+      getRealLocation();
     }, 3000);
   };
 
@@ -105,7 +133,10 @@ const HomeScreen = ({ user }) => {
 
   const handleCancelRequest = () => {
     if (settings?.pin) setShowPinPrompt(true);
-    else setIsSOSActive(false);
+    else {
+      setIsSOSActive(false);
+      showToast("Alert cancelled");
+    }
   };
 
   const handlePinSubmit = (e) => {
@@ -113,25 +144,33 @@ const HomeScreen = ({ user }) => {
     if (pinInput === settings?.pin) {
       setIsSOSActive(false);
       setShowPinPrompt(false);
-      setError('');
-    } else {
-      setError('Incorrect PIN');
       setPinInput('');
+      setError('');
+      showToast("Alert cancelled successfully");
+    } else {
+      setError('Wrong PIN. Alert continues.');
+      setTimeout(() => {
+        setShowPinPrompt(false);
+        setPinInput('');
+        setError('');
+      }, 2000);
     }
   };
 
   if (loading) {
-    return (
-      <div className="home-screen-loading">
-        <Loader2 className="spinner" size={40} />
-      </div>
-    );
+    return <div className="home-screen-loading"><Loader2 className="spinner" size={40} /></div>;
   }
 
   const firstName = user.displayName?.split(' ')[0] || 'User';
 
   return (
     <div className="home-screen">
+      {toast.show && (
+        <div className={`toast-container ${toast.type}`}>
+          {toast.msg}
+        </div>
+      )}
+
       <div className="greeting-card">
         <h2>Stay Safe, {firstName}</h2>
         <p>Help is one press away</p>
@@ -144,11 +183,8 @@ const HomeScreen = ({ user }) => {
           <div className="pulse-ring ring-3"></div>
           <button 
             className={`sos-button ${isHolding ? 'holding' : ''}`}
-            onMouseDown={startHold}
-            onMouseUp={endHold}
-            onMouseLeave={endHold}
-            onTouchStart={startHold}
-            onTouchEnd={endHold}
+            onMouseDown={startHold} onMouseUp={endHold} onMouseLeave={endHold}
+            onTouchStart={startHold} onTouchEnd={endHold}
           >
             <span>PRESS FOR<br/>HELP</span>
           </button>
@@ -175,42 +211,52 @@ const HomeScreen = ({ user }) => {
 
       <AnimatePresence>
         {isSOSActive && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="sos-popup-overlay">
-            <div className="sos-popup-content">
-              <AlertTriangle size={80} className="warning-icon-animate" />
-              <h1 className="popup-title">ALERT SENT!</h1>
-              <p className="popup-subtitle">Help is on the way</p>
-
-              <div className="countdown-circle">
-                <span>{countdown}</span>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="sos-alert-overlay">
+            <div className="sos-alert-content">
+              <div className="alert-header">
+                <span className="large-emoji">🚨</span>
+                <h1>ALERT SENT!</h1>
+                <p>SMS sent to all contacts</p>
               </div>
 
-              <div className="notified-section">
-                <p>Notified:</p>
-                <div className="pills-container">
-                  {contacts.length > 0 ? contacts.map((c, i) => (
-                    <span key={i} className="contact-pill">{c.name}</span>
-                  )) : (
-                    <span className="contact-pill">Emergency Services</span>
-                  )}
+              <div className="alert-countdown-section">
+                <div className="alert-countdown-circle">
+                  <span>{countdown}</span>
                 </div>
+                <p>{countdown > 0 ? `SMS will send in ${countdown} seconds` : 'Sending help your way...'}</p>
               </div>
 
-              <button className="btn-cancel-popup" onClick={handleCancelRequest}>
-                CANCEL ALERT
+              <div className="alert-location-section">
+                <h3>📍 Your Location:</h3>
+                <p className="coord-text">Lat: {location?.lat}, Lng: {location?.lng}</p>
+                <a href={`https://maps.google.com/?q=${location?.lat},${location?.lng}`} target="_blank" rel="noreferrer" className="alert-maps-link">
+                  Open in Google Maps
+                </a>
+              </div>
+
+              <div className="alert-status-section">
+                {contacts.map(c => (
+                  <div key={c.id} className="status-row">
+                    <span className="tick">✅</span>
+                    <span>SMS delivered to {c.name}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button className="btn-cancel-alarm" onClick={handleCancelRequest}>
+                CANCEL — False Alarm
               </button>
 
               {showPinPrompt && (
-                <div className="pin-popup-overlay">
-                  <div className="pin-popup-box">
-                    <Lock size={32} />
-                    <h3>Enter PIN</h3>
+                <div className="pin-modal-overlay">
+                  <div className="pin-modal-box">
+                    <h3>Enter your 4-digit PIN to cancel</h3>
                     <form onSubmit={handlePinSubmit}>
-                      <input type="password" maxLength="4" autoFocus value={pinInput} onChange={e => setPinInput(e.target.value)} />
-                      {error && <p className="pin-error-text">{error}</p>}
-                      <div className="pin-actions">
-                        <button type="button" onClick={() => setShowPinPrompt(false)}>Back</button>
-                        <button type="submit" className="confirm">Confirm</button>
+                      <input type="password" maxLength="4" autoFocus value={pinInput} onChange={e => setPinInput(e.target.value)} placeholder="****" />
+                      {error && <p className="pin-error">{error}</p>}
+                      <div className="pin-modal-actions">
+                        <button type="button" className="btn-back" onClick={() => setShowPinPrompt(false)}>Go Back</button>
+                        <button type="submit" className="btn-confirm">Confirm Cancel</button>
                       </div>
                     </form>
                   </div>
