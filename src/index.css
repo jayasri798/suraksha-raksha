@@ -297,36 +297,34 @@ h1, h2, h3, h4 {
 
   /* Responsive Contacts Screen layout */
   .contacts-screen {
-    display: grid;
-    grid-template-columns: 1fr 1.4fr;
-    gap: 28px;
-    align-items: start;
-  }
-  .contacts-hero-card {
-    grid-column: span 2;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
   }
 
   /* Responsive Location Screen layout */
   .location-screen {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: 28px;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
   }
-  .location-hero-card {
-    grid-column: span 2;
+  .map-glass-panel {
+    height: 400px; /* Constrain map height on desktop */
   }
 
   /* Responsive Settings Screen layout */
   .settings-screen {
-    display: grid;
-    grid-template-columns: 1fr 1.3fr;
-    gap: 28px;
-    align-items: start;
-  }
-  .settings-hero-card {
-    grid-column: span 1;
-    height: 100%;
-    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
   }
 }
