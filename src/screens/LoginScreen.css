@@ -1,86 +1,128 @@
+/* SafeHer Premium Apple Login Screen CSS */
+
 .login-screen {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6b46c1 0%, #44337a 100%);
-  padding: 20px;
-  color: white;
+  background-color: var(--bg-page);
+  padding: 24px;
+  color: var(--text-main);
   text-align: center;
 }
 
 .login-header {
-  margin-bottom: 40px;
-}
-
-.shield-icon-wrapper {
-  margin-bottom: 16px;
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-}
-
-.login-title {
-  font-size: 36px;
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: -0.5px;
-}
-
-.login-tagline {
-  font-size: 16px;
-  opacity: 0.9;
-  margin-top: 8px;
-}
-
-.login-card {
-  background: white;
-  width: 100%;
-  max-width: 340px;
-  padding: 32px 24px;
-  border-radius: 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  margin-bottom: 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.welcome-text {
-  color: #1a202c;
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
+.apple-logo-wrapper {
+  margin-bottom: 16px;
+  position: relative;
 }
 
-.signin-text {
-  color: #718096;
-  font-size: 15px;
-  margin: 0 0 32px 0;
-}
-
-.google-signin-btn {
-  width: 100%;
-  height: 52px;
+.silhouette-logo-circle {
+  width: 120px;
+  height: 120px;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
+  overflow: hidden; /* Hide bottom text details */
+}
+
+.login-silhouette-img {
+  width: 90px;
+  height: 90px;
+  object-fit: cover;
+  transform: translateY(7px) scale(1.15); /* Center silhouettes perfectly */
+}
+
+.login-title-apple {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -1px;
+}
+
+.login-tagline-apple {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Card Section */
+.login-card-container {
+  width: 100%;
+  max-width: 340px;
+}
+
+.login-glass-card-apple {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 32px 24px;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-text-apple {
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 24px 0;
+  letter-spacing: -0.2px;
+}
+
+/* Google Sign-in with Apple-style thin borders */
+.google-pill-btn-apple {
+  width: 100%;
+  height: 50px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 25px; /* Apple clean pill shape */
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  color: #2d3748;
-  font-size: 16px;
+  color: var(--text-main);
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.google-signin-btn:hover {
-  background: #f7fafc;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.google-pill-btn-apple:hover {
+  background-color: rgba(0,0,0,0.02);
+  border-color: var(--text-main);
 }
 
-.google-signin-btn:disabled {
+[data-theme='dark'] .google-pill-btn-apple:hover {
+  background-color: rgba(255,255,255,0.02);
+  border-color: var(--text-main);
+}
+
+.google-pill-btn-apple:active {
+  transform: scale(0.98);
+}
+
+.google-pill-btn-apple:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -91,24 +133,33 @@
 }
 
 .spinner {
-  animation: spin 1s linear infinite;
-  color: #6b46c1;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  animation: spinSlow 1.5s linear infinite;
+  color: var(--secondary);
 }
 
 .login-error {
-  color: #e53e3e;
-  font-size: 14px;
-  margin-top: 16px;
-  font-weight: 500;
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 14px;
+  font-weight: 600;
 }
 
-.privacy-text {
-  color: #a0aec0;
+.privacy-text-apple {
+  color: var(--text-muted);
   font-size: 13px;
+  font-weight: 500;
   margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-shield-check-green {
+  color: #34C759; /* Apple System Green */
+}
+
+@media (min-width: 768px) {
+  .login-screen {
+    min-height: 90vh;
+  }
 }

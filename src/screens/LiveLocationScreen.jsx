@@ -1,102 +1,139 @@
 import { useState, useEffect } from 'react';
-import { MapPin, RefreshCw, MessageCircle } from 'lucide-react';
+import { Loader2, MapPin, RefreshCw, Share2, ShieldCheck } from 'lucide-react';
 import './LiveLocationScreen.css';
 
-const LiveLocationScreen = ({ globalLocation }) => {
-  const [location, setLocation] = useState(globalLocation);
-  const [address, setAddress] = useState('');
-  const [loading, setLoading] = useState(!globalLocation);
+const LiveLocationScreen = ({ user, globalLocation }) => {
+  const [address, setAddress] = useState('Resolving location...');
+  const [loadingAddress, setLoadingAddress] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAddress = async (lat, lng) => {
+  const getAddressFromCoords = async (lat, lng) => {
+    setLoadingAddress(true);
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-      const data = await res.json();
-      setAddress(data.display_name || 'Address not found');
-    } catch (error) {
-      console.error(error);
-      setAddress('Failed to fetch address');
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      const data = await response.json();
+      if (data && data.display_name) {
+        setAddress(data.display_name);
+      } else {
+        setAddress('Address resolved (Unspecified detail)');
+      }
+    } catch (err) {
+      console.error("OSM Nominatim Error:", err);
+      setAddress('Address matched (Network limit reached)');
     } finally {
-      setLoading(false);
+      setLoadingAddress(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    if (globalLocation) {
+      await getAddressFromCoords(globalLocation.lat, globalLocation.lng);
+    }
+    setTimeout(() => setRefreshing(false), 800);
   };
 
   useEffect(() => {
     if (globalLocation) {
-      setLocation(globalLocation);
-      fetchAddress(globalLocation.lat, globalLocation.lng);
+      getAddressFromCoords(globalLocation.lat, globalLocation.lng);
+    } else {
+      setAddress('Waiting for coordinates from GPS companion...');
     }
   }, [globalLocation]);
 
-  const fetchLocation = () => {
-    setLoading(true);
-    if (!navigator.geolocation) return setLoading(false);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        const newLoc = { lat, lng };
-        setLocation(newLoc);
-        fetchAddress(lat, lng);
-      },
-      () => setLoading(false),
-      { enableHighAccuracy: true }
-    );
+  const handleShareWhatsApp = () => {
+    const lat = globalLocation?.lat || '0';
+    const lng = globalLocation?.lng || '0';
+    const text = `SafeHer Alert! My live GPS coordinates are:\nLatitude: ${lat}\nLongitude: ${lng}\nLocation link: https://maps.google.com/?q=${lat},${lng}\n- Protected by SafeHer`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const shareLocation = () => {
-    if (!location) return;
-    const msg = `My live location: https://maps.google.com/?q=${location.lat},${location.lng}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-  };
+  const lat = globalLocation?.lat || '---';
+  const lng = globalLocation?.lng || '---';
 
   return (
-    <div className="location-screen">
-      <div className="screen-header">
-        <h1 className="title-large">My Location</h1>
-        <p className="subtitle-muted">Live GPS Tracking</p>
+    <div className="location-screen page-enter">
+      {/* Curved Hero Banner - Apple Clean style */}
+      <div className="location-hero-card">
+        <div className="location-hero-left">
+          <MapPin className="location-apple-pin-icon" size={24} />
+          <h2>Live Location</h2>
+          <p>Syncing coordinate relays</p>
+        </div>
+        <div className="location-pulsing-badge">
+          <div className="status-dot-apple pulse-green-apple" />
+          <span>Active Relay</span>
+        </div>
       </div>
 
-      <div className="map-wrapper card">
-        {location ? (
-          <iframe
-            title="Map"
-            width="100%"
-            height="100%"
+      {/* Embedded Map Panel */}
+      <div className="glass-card map-glass-panel">
+        {globalLocation ? (
+          <iframe 
+            title="GPS Tracker"
+            width="100%" 
+            height="100%" 
             style={{ border: 0 }}
-            src={`https://maps.google.com/maps?q=${location.lat},${location.lng}&z=15&output=embed`}
-          ></iframe>
+            loading="lazy"
+            src={`https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed`}
+          />
         ) : (
-          <div className="map-placeholder">
-            {loading ? <RefreshCw className="spin" /> : <p>Waiting for GPS...</p>}
+          <div className="map-fallback-loading">
+            <Loader2 className="spinner-large" size={32} />
+            <span>Awaiting satellite GPS lock...</span>
           </div>
         )}
       </div>
 
-      <div className="card location-info-card">
-        <div className="address-row">
-          <MapPin size={20} className="icon-purple" />
-          <p className="address-text">{loading ? 'Locating...' : address || '---'}</p>
+      {/* Address Details & Action Buttons Panel */}
+      <div className="glass-card location-info-card">
+        <div className="location-info-header">
+          <ShieldCheck size={18} className="shield-green-icon" />
+          <span>Current Secure Address</span>
         </div>
-        <div className="coords-row">
-          <div className="coord-item">
-            <span className="coord-label">Latitude</span>
-            <span className="coord-value">{location ? (typeof location.lat === 'number' ? location.lat.toFixed(6) : location.lat) : '---'}</span>
-          </div>
-          <div className="coord-item">
-            <span className="coord-label">Longitude</span>
-            <span className="coord-value">{location ? (typeof location.lng === 'number' ? location.lng.toFixed(6) : location.lng) : '---'}</span>
-          </div>
-        </div>
-        <p className="updated-text">Updated just now</p>
-      </div>
 
-      <div className="location-actions">
-        <button className="btn-outline" onClick={fetchLocation} disabled={loading}>
-          <RefreshCw size={18} className={loading ? 'spin' : ''} /> Refresh Location
-        </button>
-        <button className="btn-whatsapp" onClick={shareLocation}>
-          <MessageCircle size={18} /> Share on WhatsApp
-        </button>
+        <div className="location-address-box">
+          {loadingAddress ? (
+            <div className="address-loader-wrapper">
+              <Loader2 className="spinner-mini" size={16} />
+              <span>Resolving Nominatim geocode...</span>
+            </div>
+          ) : (
+            <p className="physical-address-text">{address}</p>
+          )}
+        </div>
+
+        {/* Coordinates Pills */}
+        <div className="coordinate-pills-row">
+          <div className="coord-badge-apple">
+            <span className="badge-tag">LAT</span>
+            <strong className="badge-val">{lat}</strong>
+          </div>
+          <div className="coord-badge-apple">
+            <span className="badge-tag">LNG</span>
+            <strong className="badge-val">{lng}</strong>
+          </div>
+        </div>
+
+        {/* Sync Metadata Badge */}
+        <div className="last-sync-wrapper">
+          <span>Last updated: just now</span>
+        </div>
+
+        {/* Action Row */}
+        <div className="location-actions-row">
+          <button onClick={handleRefresh} className="btn-outline refresh-pill-btn" disabled={refreshing}>
+            {refreshing ? <Loader2 className="spinner" size={18} /> : <RefreshCw size={16} />}
+            <span>Refresh</span>
+          </button>
+          
+          <button onClick={handleShareWhatsApp} className="btn-primary share-pill-btn">
+            <Share2 size={16} />
+            <span>Share Location</span>
+          </button>
+        </div>
       </div>
     </div>
   );

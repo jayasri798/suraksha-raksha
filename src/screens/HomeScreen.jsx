@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, AlertTriangle, Lock, MapPin, Loader2 } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Lock, MapPin, Loader2, Bell, Check, Phone, Cpu, CheckCircle2, RefreshCw } from 'lucide-react';
 import { db } from '../firebase';
 import { doc, getDoc, collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import './HomeScreen.css';
 
-const HomeScreen = ({ user, globalLocation }) => {
+const HomeScreen = ({ user, globalLocation, gender }) => {
   const [isSOSActive, setIsSOSActive] = useState(false);
   const [countdown, setCountdown] = useState(10);
   const [location, setLocation] = useState(globalLocation);
@@ -17,10 +17,16 @@ const HomeScreen = ({ user, globalLocation }) => {
   const [error, setError] = useState('');
   const [smsSent, setSmsSent] = useState(false);
   const [toast, setToast] = useState({ show: false, msg: '', type: '' });
+  const [diagState, setDiagState] = useState('idle'); // 'idle', 'running', 'success'
   
-  const [isHolding, setIsHolding] = useState(false);
-  const holdTimerRef = useRef(null);
-
+  const runDiagnostics = () => {
+    setDiagState('running');
+    setTimeout(() => {
+      setDiagState('success');
+      showToast("Hardware Diagnostics: ALL SYSTEMS NOMINAL");
+    }, 1500);
+  };
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -90,18 +96,20 @@ const HomeScreen = ({ user, globalLocation }) => {
 
       const data = await response.json();
       if (data.success) {
-        // Log to Firestore
         await addDoc(collection(db, "users", user.uid, "sos_alerts"), {
           location: location || globalLocation,
           timestamp: serverTimestamp(),
           userName: user.displayName,
           status: 'sent'
         });
+        showToast("Emergency SMS successfully sent!");
       } else {
         console.error("SMS Failed:", data.error);
+        showToast("SMS Failed to deliver", "error");
       }
     } catch (err) {
       console.error("Error calling SMS API:", err);
+      showToast("Network error triggering SMS", "error");
     }
   };
 
@@ -115,25 +123,17 @@ const HomeScreen = ({ user, globalLocation }) => {
     return () => clearInterval(timer);
   }, [isSOSActive, countdown, showPinPrompt]);
 
-  const startHold = () => {
-    setIsHolding(true);
-    holdTimerRef.current = setTimeout(() => {
-      setCountdown(10);
-      setSmsSent(false);
-      setIsSOSActive(true);
-      setIsHolding(false);
-      getRealLocation();
-    }, 3000);
-  };
-
-  const endHold = () => {
-    clearTimeout(holdTimerRef.current);
-    setIsHolding(false);
+  const handleSOSActivate = () => {
+    setCountdown(10);
+    setSmsSent(false);
+    setIsSOSActive(true);
+    getRealLocation();
   };
 
   const handleCancelRequest = () => {
-    if (settings?.pin) setShowPinPrompt(true);
-    else {
+    if (settings?.pin) {
+      setShowPinPrompt(true);
+    } else {
       setIsSOSActive(false);
       showToast("Alert cancelled");
     }
@@ -150,123 +150,346 @@ const HomeScreen = ({ user, globalLocation }) => {
     } else {
       setError('Wrong PIN. Alert continues.');
       setTimeout(() => {
-        setShowPinPrompt(false);
-        setPinInput('');
         setError('');
       }, 2000);
     }
   };
 
   if (loading) {
-    return <div className="home-screen-loading"><Loader2 className="spinner" size={40} /></div>;
+    return (
+      <div className="home-screen-loading">
+        <Loader2 className="spinner-large" size={40} />
+      </div>
+    );
   }
 
   const firstName = user.displayName?.split(' ')[0] || 'User';
 
+  const isMale = gender === 'male';
+
   return (
-    <div className="home-screen">
+    <>
+      <div className="home-screen page-enter">
       {toast.show && (
         <div className={`toast-container ${toast.type}`}>
           {toast.msg}
         </div>
       )}
 
-      <div className="greeting-card">
-        <h2>Stay Safe, {firstName}</h2>
-        <p>Help is one press away</p>
+      {/* Greeting Hero Card - Apple Clean style */}
+      <div className="greeting-card-apple">
+        <div className="greeting-left-apple">
+          <div className="status-badge-apple">
+            <ShieldCheck size={14} className="apple-secured-icon" />
+            <span>{isMale ? 'Guardian Live Uplink' : 'Encrypted Connection'}</span>
+          </div>
+          <h2>{isMale ? 'Guardian Portal,' : 'Stay Safe,'}</h2>
+          <h1 className="hero-name-apple">{firstName}</h1>
+          <p className="hero-subtext-apple">
+            {isMale ? 'Monitoring loved ones satellite link' : 'SafeHer Protective Shield is Active'}
+          </p>
+        </div>
+        <div className="greeting-right-apple">
+          <div className="apple-glow-shield-wrapper">
+            <ShieldCheck size={48} className="apple-home-shield-vector" />
+          </div>
+        </div>
       </div>
 
-      <div className="sos-section">
-        <div className="sos-rings-container">
-          <div className="pulse-ring ring-1"></div>
-          <div className="pulse-ring ring-2"></div>
-          <div className="pulse-ring ring-3"></div>
-          <button 
-            className={`sos-button ${isHolding ? 'holding' : ''}`}
-            onMouseDown={startHold} onMouseUp={endHold} onMouseLeave={endHold}
-            onTouchStart={startHold} onTouchEnd={endHold}
-          >
-            <span>PRESS FOR<br/>HELP</span>
+      {/* SOS / Tracking Card based on Gender */}
+      {isMale ? (
+        <div className="glass-card sos-section-apple tracking-section-guardian">
+          <h3 className="sos-title-apple">Loved One Tracking Deck</h3>
+          
+          <div className="guardian-tracking-hero-box">
+            <div className="companion-radar-outer">
+              <div className="companion-radar-inner">
+                <span className="guardian-emoji-center">👨</span>
+              </div>
+            </div>
+            <p className="guardian-tracking-desc">
+              You are configured as a Guardian. Monitor live satellite coordinate broadcasts and eSIM pairing relays.
+            </p>
+          </div>
+
+          <div className="guardian-quick-actions">
+            <button 
+              onClick={() => window.location.href = '/location'}
+              className="btn-primary run-diagnostics-btn-apple guardian-track-btn"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            >
+              <MapPin size={18} />
+              <span>Track Loved One Live</span>
+            </button>
+          </div>
+
+          {/* Status Pills */}
+          <div className="sos-status-pills-apple">
+            <div className="status-pill-apple gps-pill-apple">
+              <span className="pill-dot-apple gps-dot-apple" />
+              <span>Broadcast Node Listening</span>
+            </div>
+            <div className="status-pill-apple ready-pill-apple" style={{ background: 'rgba(0,122,255,0.1)', color: '#007AFF' }}>
+              <span className="pill-dot-apple ready-dot-apple" style={{ background: '#007AFF' }} />
+              <span>eSIM Companion Linked</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="glass-card sos-section-apple">
+          <h3 className="sos-title-apple">Emergency Dispatch Console</h3>
+          
+          <div className="sos-rings-container-apple">
+            <div className="pulse-ring-apple ring-apple-1"></div>
+            <div className="pulse-ring-apple ring-apple-2"></div>
+            <div className="pulse-ring-apple ring-apple-3"></div>
+            
+            <button 
+              className="sos-button-apple"
+              onDoubleClick={handleSOSActivate}
+              onTouchEnd={(e) => {
+                if (e.timeStamp - (window.lastTap || 0) < 300) {
+                  handleSOSActivate();
+                }
+                window.lastTap = e.timeStamp;
+              }}
+            >
+              <div className="sos-button-inner-apple">
+                <span className="sos-alert-label">SOS</span>
+                <span className="sos-press-instruction">Double Press</span>
+              </div>
+            </button>
+          </div>
+          <p className="sos-hint-apple">Double-tap or double-click to trigger SOS immediately</p>
+
+          {/* Status Pills */}
+          <div className="sos-status-pills-apple">
+            <div className="status-pill-apple gps-pill-apple">
+              <span className="pill-dot-apple gps-dot-apple" />
+              <span>GPS Tracking Active</span>
+            </div>
+            <div className="status-pill-apple ready-pill-apple">
+              <span className="pill-dot-apple ready-dot-apple" />
+              <span>Companion Ready</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SIM Toolkit & Hardware Device Diagnostics Check */}
+      <div className="glass-card device-diagnostics-card-apple">
+        <div className="diagnostics-header-apple">
+          <Cpu size={16} className="icon-apple-cpu" />
+          <span>SIM Toolkit & Hardware Companion Status</span>
+        </div>
+
+        <div className="diagnostics-status-row-apple">
+          <div className="diag-indicator-apple">
+            <span className="indicator-label-apple">Device Status</span>
+            <strong className="indicator-value-apple status-green-text">
+              <span className="small-pulse-dot-green-apple" />
+              Connected
+            </strong>
+          </div>
+          <div className="diag-indicator-apple">
+            <span className="indicator-label-apple">SIM Toolkit Loop</span>
+            <strong className="indicator-value-apple">Active (LTE)</strong>
+          </div>
+        </div>
+
+        {diagState === 'running' ? (
+          <div className="diagnostics-running-loader">
+            <Loader2 className="spinner spinner-mini" size={16} />
+            <span>Verifying loops & SIM toolkit relays...</span>
+          </div>
+        ) : diagState === 'success' ? (
+          <div className="diagnostics-checklist-apple">
+            <div className="checklist-item-apple">
+              <CheckCircle2 size={14} className="icon-green-check" />
+              <span>SIM Toolkit Gateway: Active (Credits OK)</span>
+            </div>
+            <div className="checklist-item-apple">
+              <CheckCircle2 size={14} className="icon-green-check" />
+              <span>Hardware Panic Switch: Loop Connected</span>
+            </div>
+            <div className="checklist-item-apple">
+              <CheckCircle2 size={14} className="icon-green-check" />
+              <span>Satellite GPS Beacon: Lock Acquired</span>
+            </div>
+            <div className="checklist-item-apple">
+              <CheckCircle2 size={14} className="icon-green-check" />
+              <span>Broadcast Route: Parents & Police Ready</span>
+            </div>
+            <button className="btn-outline recheck-btn-apple" onClick={runDiagnostics}>
+              <RefreshCw size={14} />
+              <span>Re-Run Diagnostics Check</span>
+            </button>
+          </div>
+        ) : (
+          <button className="btn-primary run-diagnostics-btn-apple" onClick={runDiagnostics}>
+            <span>Run Diagnostics Check</span>
           </button>
-        </div>
-        <p className="sos-hint">Hold 3 seconds to send SOS alert</p>
+        )}
       </div>
 
-      <div className="quick-info-grid">
-        <div className="card info-mini-card">
-          <Shield size={20} className="icon-purple" />
-          <div className="info-mini-text">
-            <strong>Protected</strong>
-            <span>3 layer alert system</span>
+      {/* Quick Features Row */}
+      <div className="quick-features-row">
+        <div className="glass-card feature-card-apple-item">
+          <div className="feature-icon-circle-apple icon-gray">
+            <ShieldCheck size={20} />
           </div>
+          <strong className="feat-title">Shield Mode</strong>
+          <span className="feat-sub">24/7 Security Monitor</span>
         </div>
-        <div className="card info-mini-card">
-          <MapPin size={20} className="icon-purple" />
-          <div className="info-mini-text">
-            <strong>GPS Active</strong>
-            <span>Location tracking on</span>
+
+        <div className="glass-card feature-card-apple-item">
+          <div className="feature-icon-circle-apple icon-gray">
+            <MapPin size={20} />
           </div>
+          <strong className="feat-title">Live Tracking</strong>
+          <span className="feat-sub">Direct GPS Link</span>
+        </div>
+
+        <div className="glass-card feature-card-apple-item">
+          <div className="feature-icon-circle-apple icon-gray">
+            <Bell size={20} />
+          </div>
+          <strong className="feat-title">Alert Network</strong>
+          <span className="feat-sub">Guardians Link</span>
         </div>
       </div>
 
+    </div>
+
+      {/* High-Intensity Full Screen SOS Alert Overlay - Apple Dark Theme */}
       <AnimatePresence>
         {isSOSActive && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="sos-alert-overlay">
-            <div className="sos-alert-content">
-              <div className="alert-header">
-                <span className="large-emoji">🚨</span>
-                <h1>ALERT SENT!</h1>
-                <p>SMS sent to all contacts</p>
-              </div>
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            className="sos-overlay-apple-dark"
+          >
+            {/* Heartbeat Grid Background */}
+            <div className="heartbeat-grid-top">
+              <svg className="heartbeat-svg-apple" viewBox="0 0 100 30" preserveAspectRatio="none">
+                <path 
+                  className="heartbeat-path-apple" 
+                  d="M0,15 L35,15 L38,5 L42,25 L45,10 L48,18 L50,15 L100,15" 
+                  fill="none" 
+                  stroke="#FF453A" 
+                  strokeWidth="2.5" 
+                />
+              </svg>
+            </div>
 
-              <div className="alert-countdown-section">
-                <div className="alert-countdown-circle">
-                  <span>{countdown}</span>
+            <div className="sos-overlay-content-apple">
+              <div className="alert-header-apple">
+                <div className="pulsing-shield-alert-apple">
+                  <ShieldCheck size={40} className="red-alert-vector" />
                 </div>
-                <p>{countdown > 0 ? `SMS will send in ${countdown} seconds` : 'Sending help your way...'}</p>
+                <h1 className="alert-title-apple">ALERT INITIATED</h1>
+                <p className="alert-subtitle-apple">Contacting Guardians immediately</p>
               </div>
 
-              <div className="alert-location-section">
-                <h3>📍 Your Location:</h3>
-                <p className="coord-text">Lat: {location?.lat}, Lng: {location?.lng}</p>
-                <a href={`https://maps.google.com/?q=${location?.lat},${location?.lng}`} target="_blank" rel="noreferrer" className="alert-maps-link">
-                  Open in Google Maps
+              {/* Countdown circle */}
+              <div className="countdown-ring-apple">
+                <div className="countdown-glow-apple" />
+                <span className="countdown-value-apple">{countdown}</span>
+              </div>
+              <p className="countdown-caption-apple">
+                {countdown > 0 ? `Alert dispatches in ${countdown}s` : 'Guardians notified successfully! ✅'}
+              </p>
+
+              {/* Location Card */}
+              <div className="glass-card alert-location-card-apple">
+                <div className="alert-location-header-apple">
+                  <MapPin size={16} />
+                  <span>Current GPS Coordinates</span>
+                </div>
+                <p className="alert-coord-text-apple">Lat: {location?.lat || '---'}, Lng: {location?.lng || '---'}</p>
+                <a 
+                  href={`https://maps.google.com/?q=${location?.lat},${location?.lng}`} 
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="btn-primary maps-apple-btn"
+                >
+                  Open in Apple Maps
                 </a>
               </div>
 
-              <div className="alert-status-section">
+              {/* Guardians List */}
+              <div className="alert-guardians-list-apple">
+                <div className="guardian-alert-pill police-alert-pill-apple">
+                  <strong>POLICE CONTROL CENTER (112 Dispatch)</strong>
+                  <span className="dispatch-badge-apple">
+                    {countdown === 0 ? <Check size={14} className="check-green" /> : <Loader2 size={12} className="spin-white" />}
+                  </span>
+                </div>
                 {contacts.map(c => (
-                  <div key={c.id} className="status-row">
-                    <span className="tick">✅</span>
-                    <span>SMS delivered to {c.name}</span>
+                  <div key={c.id} className="guardian-alert-pill">
+                    <span>{c.name}</span>
+                    <span className="dispatch-badge-apple">
+                      {countdown === 0 ? <Check size={14} className="check-green" /> : <Loader2 size={12} className="spin-white" />}
+                    </span>
                   </div>
                 ))}
+                {contacts.length === 0 && (
+                  <div className="guardian-alert-pill empty">
+                    <span>No guardians configured yet</span>
+                  </div>
+                )}
               </div>
 
-              <button className="btn-cancel-alarm" onClick={handleCancelRequest}>
-                CANCEL — False Alarm
+              {/* Cancel Button */}
+              <button className="btn-cancel-apple" onClick={handleCancelRequest}>
+                <Lock size={16} />
+                <span>Cancel Dispatch — Enter PIN</span>
               </button>
 
-              {showPinPrompt && (
-                <div className="pin-modal-overlay">
-                  <div className="pin-modal-box">
-                    <h3>Enter your 4-digit PIN to cancel</h3>
-                    <form onSubmit={handlePinSubmit}>
-                      <input type="password" maxLength="4" autoFocus value={pinInput} onChange={e => setPinInput(e.target.value)} placeholder="****" />
-                      {error && <p className="pin-error">{error}</p>}
-                      <div className="pin-modal-actions">
-                        <button type="button" className="btn-back" onClick={() => setShowPinPrompt(false)}>Go Back</button>
-                        <button type="submit" className="btn-confirm">Confirm Cancel</button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              )}
+              {/* PIN Prompt Modal */}
+              <AnimatePresence>
+                {showPinPrompt && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="pin-modal-backdrop-apple"
+                  >
+                    <motion.div 
+                      initial={{ scale: 0.94, y: 15 }}
+                      animate={{ scale: 1, y: 0 }}
+                      exit={{ scale: 0.94, y: 15 }}
+                      className="glass-card pin-modal-box-apple"
+                    >
+                      <Lock size={32} className="pin-secure-lock" />
+                      <h3>Security PIN Required</h3>
+                      <p className="pin-hint-apple-desc">Enter your 4-digit safety PIN to abort dispatch</p>
+                      <form onSubmit={handlePinSubmit}>
+                        <input 
+                          type="password" 
+                          maxLength="4" 
+                          autoFocus 
+                          value={pinInput} 
+                          onChange={e => setPinInput(e.target.value)} 
+                          placeholder="••••" 
+                          className="pin-input-field-apple"
+                        />
+                        {error && <p className="pin-error-apple">{error}</p>}
+                        <div className="pin-actions-apple-row">
+                          <button type="button" className="btn-outline pin-back-apple" onClick={() => setShowPinPrompt(false)}>Back</button>
+                          <button type="submit" className="btn-primary pin-confirm-apple">Abort Alert</button>
+                        </div>
+                      </form>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 };
 

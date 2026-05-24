@@ -1,25 +1,23 @@
 import { useState, useEffect } from 'react';
-import { UserPlus, Trash2, Phone, Loader2 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, getDocs, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { Users, Phone, Trash2, Loader2, UserPlus, ShieldCheck } from 'lucide-react';
 import './ContactsScreen.css';
 
 const ContactsScreen = ({ user }) => {
   const [contacts, setContacts] = useState([]);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [focusedField, setFocusedField] = useState('');
 
   const fetchContacts = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "users", user.uid, "contacts"));
-      const data = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setContacts(data);
+      const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setContacts(list);
     } catch (err) {
       console.error("Error fetching contacts:", err);
     } finally {
@@ -28,39 +26,44 @@ const ContactsScreen = ({ user }) => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchContacts();
   }, [user.uid]);
 
-  const handleAdd = async (e) => {
+  const handleAddContact = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !phone.trim()) return setError('Fill all fields');
-    if (contacts.length >= 5) return setError('Max 5 contacts allowed');
-    
-    setAdding(true);
+    if (!name || !phone) {
+      setError('Please fill in all fields');
+      return;
+    }
+    if (contacts.length >= 5) {
+      setError('You can add up to 5 guardians only');
+      return;
+    }
+
+    setSubmitting(true);
+    setError('');
+
     try {
-      const docRef = await addDoc(collection(db, "users", user.uid, "contacts"), {
-        name: name.trim(),
-        phone: phone.trim(),
-        createdAt: serverTimestamp()
+      await addDoc(collection(db, "users", user.uid, "contacts"), {
+        name,
+        phone,
+        createdAt: new Date()
       });
-      
-      setContacts([...contacts, { id: docRef.id, name: name.trim(), phone: phone.trim() }]);
       setName('');
       setPhone('');
-      setError('');
+      fetchContacts();
     } catch (err) {
-      console.error("Error adding contact:", err);
-      setError('Failed to add contact');
+      console.error(err);
+      setError('Failed to add contact. Try again.');
     } finally {
-      setAdding(false);
+      setSubmitting(false);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteContact = async (id) => {
     try {
       await deleteDoc(doc(db, "users", user.uid, "contacts", id));
-      setContacts(contacts.filter(c => c.id !== id));
+      fetchContacts();
     } catch (err) {
       console.error("Error deleting contact:", err);
     }
@@ -68,61 +71,108 @@ const ContactsScreen = ({ user }) => {
 
   if (loading) {
     return (
-      <div className="contacts-loading">
-        <Loader2 className="spinner" size={40} />
+      <div className="contacts-screen-loading">
+        <Loader2 className="spinner-large" size={40} />
       </div>
     );
   }
 
   return (
-    <div className="contacts-screen">
-      <div className="screen-header">
-        <h1 className="title-large">Emergency Contacts</h1>
-        <p className="subtitle-muted">Added {contacts.length}/5 contacts</p>
-      </div>
-
-      <div className="add-contact-section">
-        <div className="card add-card">
-          <form onSubmit={handleAdd}>
-            <div className="input-group">
-              <label className="input-label">Contact Name</label>
-              <input type="text" className="input-field" placeholder="e.g. Jane Doe" value={name} onChange={e => setName(e.target.value)} />
-            </div>
-            <div className="input-group">
-              <label className="input-label">Phone Number</label>
-              <input type="tel" className="input-field" placeholder="e.g. +1 234 567 890" value={phone} onChange={e => setPhone(e.target.value)} />
-            </div>
-            {error && <p className="error-text">{error}</p>}
-            <button type="submit" className="btn-primary" disabled={adding}>
-              {adding ? <Loader2 className="spinner" size={18} /> : <><UserPlus size={18} /> Add Contact</>}
-            </button>
-          </form>
+    <div className="contacts-screen page-enter">
+      {/* Curved Hero Banner - Apple Clean style */}
+      <div className="contacts-hero-card">
+        <div className="contacts-hero-left">
+          <ShieldCheck className="contacts-apple-shield-icon" size={24} />
+          <h2>Emergency Network</h2>
+          <p>Trusted guardians who protect you</p>
+        </div>
+        <div className="contacts-capacity-badge">
+          {contacts.length} OF 5 CONFIGURED
         </div>
       </div>
 
-      <div className="contacts-list-section">
-        <h3 className="section-title">Saved Contacts</h3>
-        <div className="contacts-list">
-          {contacts.map(c => (
-            <div key={c.id} className="card contact-row-card">
-              <div className="contact-avatar">
-                {c.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="contact-info">
-                <strong>{c.name}</strong>
-                <span>{c.phone}</span>
-              </div>
-              <div className="contact-actions">
-                <a href={`tel:${c.phone}`} className="call-btn-circle">
-                  <Phone size={16} />
-                </a>
-                <button onClick={() => handleDelete(c.id)} className="delete-btn-circle">
-                  <Trash2 size={16} />
-                </button>
-              </div>
+      {/* Grid columns handle responsive web automatically */}
+      <div className="glass-card contacts-input-card">
+        <div className="form-title-row">
+          <UserPlus size={16} className="icon-apple-form" />
+          <span>Add Guardian Guardian</span>
+        </div>
+
+        <form onSubmit={handleAddContact} className="contacts-form">
+          <div className={`input-group-premium ${focusedField === 'name' ? 'focused' : ''}`}>
+            <label className="floating-label">Name</label>
+            <div className="input-wrapper-inner">
+              <Users size={18} className="input-icon" />
+              <input 
+                type="text" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)}
+                onFocus={() => setFocusedField('name')}
+                onBlur={() => setFocusedField('')}
+                placeholder="Guardian Name" 
+                className="input-field-premium"
+                required
+              />
             </div>
-          ))}
-          {contacts.length === 0 && <p className="empty-msg">No contacts added yet.</p>}
+          </div>
+
+          <div className={`input-group-premium ${focusedField === 'phone' ? 'focused' : ''}`}>
+            <label className="floating-label">Phone Number</label>
+            <div className="input-wrapper-inner">
+              <Phone size={18} className="input-icon" />
+              <input 
+                type="tel" 
+                value={phone} 
+                onChange={(e) => setPhone(e.target.value)}
+                onFocus={() => setFocusedField('phone')}
+                onBlur={() => setFocusedField('')}
+                placeholder="+91 XXXXX XXXXX" 
+                className="input-field-premium"
+                required
+              />
+            </div>
+          </div>
+
+          {error && <p className="contacts-form-error">{error}</p>}
+
+          <button type="submit" className="btn-primary contacts-submit-pill" disabled={submitting}>
+            {submitting ? <Loader2 className="spinner" size={20} /> : 'Save Guardian'}
+          </button>
+        </form>
+      </div>
+
+      <div className="contacts-list-wrapper">
+        <h3 className="section-title-apple">Configured Guardians</h3>
+        
+        <div className="contacts-list-container">
+          {contacts.map((contact) => {
+            const initial = contact.name ? contact.name.charAt(0).toUpperCase() : 'G';
+            return (
+              <div key={contact.id} className="glass-card contact-item-card-premium">
+                <div className="contact-avatar-badge">
+                  <span>{initial}</span>
+                </div>
+                <div className="contact-details-premium">
+                  <strong>{contact.name}</strong>
+                  <span>{contact.phone}</span>
+                </div>
+                <div className="contact-actions-premium">
+                  <a href={`tel:${contact.phone}`} className="contact-action-btn dial-btn-apple">
+                    <Phone size={16} />
+                  </a>
+                  <button onClick={() => handleDeleteContact(contact.id)} className="contact-action-btn delete-btn-apple">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+
+          {contacts.length === 0 && (
+            <div className="glass-card contact-item-card-premium empty-list-apple">
+              <span>No guardians configured yet. Add trusted contacts above to secure your emergency dispatch circle.</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,359 +1,958 @@
+/* SafeHer Premium Apple HomeScreen CSS */
+
 .home-screen {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-}
-
-.greeting-card {
-  height: 100px;
-  background: var(--primary-gradient);
-  border-radius: 16px;
   padding: 20px;
-  color: white;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  margin-bottom: 24px;
+  gap: 20px;
+  background-color: var(--bg-page);
 }
 
-.greeting-card h2 {
-  font-size: 24px;
+.home-screen-loading {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Greeting Hero Card - Apple Clean style */
+.greeting-card-apple {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.greeting-left-apple {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 2;
+}
+
+.status-badge-apple {
+  font-size: 11px;
   font-weight: 700;
-  margin: 0;
-  color: white;
-}
-
-.greeting-card p {
-  font-size: 14px;
-  opacity: 0.9;
-  margin-top: 4px;
-}
-
-.sos-section {
-  height: 280px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-.sos-rings-container {
-  position: relative;
-  width: 180px;
-  height: 180px;
+  color: #34C759; /* Apple System Green */
+  background: rgba(52, 199, 89, 0.08);
+  border: 1px solid rgba(52, 199, 89, 0.15);
+  padding: 4px 10px;
+  border-radius: 50px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
 }
 
-.sos-button {
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background-color: var(--danger);
-  border: none;
-  color: white;
-  font-size: 20px;
+.apple-secured-icon {
+  color: #34C759;
+}
+
+.greeting-card-apple h2 {
+  font-size: 16px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.hero-name-apple {
+  font-size: 32px;
   font-weight: 800;
-  line-height: 1.2;
-  cursor: pointer;
-  z-index: 10;
-  box-shadow: 0 8px 24px rgba(232, 32, 32, 0.4);
-  transition: transform 0.1s;
+  color: var(--text-main);
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+  margin-bottom: 8px;
 }
 
-.sos-button.holding {
-  transform: scale(0.95);
+.hero-subtext-apple {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
-.pulse-ring {
-  position: absolute;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  background-color: var(--danger);
+.greeting-right-apple {
   z-index: 1;
 }
 
-.ring-1 { animation: pulseRing 2s infinite; opacity: 0.4; }
-.ring-2 { animation: pulseRing 2s infinite 0.3s; opacity: 0.25; }
-.ring-3 { animation: pulseRing 2s infinite 0.6s; opacity: 0.1; }
-
-.sos-hint {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 24px;
-}
-
-.quick-info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: auto;
-  margin-bottom: 20px;
-}
-
-.info-mini-card {
+.apple-glow-shield-wrapper {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255, 55, 95, 0.05);
   display: flex;
-  gap: 12px;
-  padding: 16px;
-  margin: 0;
-}
-
-.info-mini-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.info-mini-text strong {
-  font-size: 14px;
-  color: var(--text-main);
-}
-
-.info-mini-text span {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-/* SOS Alert Overlay */
-.sos-alert-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: #E82020;
-  z-index: 2000;
-  display: flex;
-  flex-direction: column;
-  padding: 40px 24px;
-  color: white;
-  overflow-y: auto;
-}
-
-.sos-alert-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
   align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 55, 95, 0.08);
 }
 
-.alert-header {
+.apple-home-shield-vector {
+  color: var(--secondary); /* Elegant Apple Rose Pink */
+}
+
+/* SOS Dispatch Console */
+.sos-section-apple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  margin-bottom: 40px;
+  padding: 32px 24px;
 }
 
-.large-emoji {
-  font-size: 64px;
-  display: block;
+.sos-title-apple {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 24px;
+  letter-spacing: -0.2px;
+}
+
+.sos-rings-container-apple {
+  position: relative;
+  width: 210px;
+  height: 210px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-bottom: 16px;
 }
 
-.alert-header h1 {
-  font-size: 32px;
-  font-weight: 800;
-  margin-bottom: 8px;
+.sos-button-apple {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  border: none;
+  background: var(--gradient-sos); /* Glowing Red/Pink Apple Gradient */
+  padding: 6px;
+  cursor: pointer;
+  box-shadow: 0 12px 35px rgba(255, 69, 58, 0.35);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  z-index: 10;
 }
 
-.alert-countdown-section {
+.sos-button-apple:hover {
+  transform: scale(1.02);
+  box-shadow: 0 16px 45px rgba(255, 69, 58, 0.45);
+}
+
+.sos-button-apple:active {
+  transform: scale(0.96);
+}
+
+.sos-button-inner-apple {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 40px;
+  justify-content: center;
+  color: white;
 }
 
-.alert-countdown-circle {
-  width: 120px;
-  height: 120px;
-  border: 4px solid white;
+.sos-alert-label {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.sos-press-instruction {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+/* Concentric apple pulsing rings */
+.pulse-ring-apple {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  border: 1.5px solid var(--danger);
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes pulseRingApple {
+  0% {
+    transform: translate(-50%, -50%) scale(0.95);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.4);
+    opacity: 0;
+  }
+}
+
+.ring-apple-1 {
+  animation: pulseRingApple 3s infinite linear;
+}
+.ring-apple-2 {
+  animation: pulseRingApple 3s infinite linear;
+  animation-delay: 1s;
+}
+.ring-apple-3 {
+  animation: pulseRingApple 3s infinite linear;
+  animation-delay: 2s;
+}
+
+.sos-hint-apple {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 20px;
+}
+
+.sos-status-pills-apple {
+  display: flex;
+  gap: 12px;
+}
+
+.status-pill-apple {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 50px;
+  color: var(--text-muted);
+}
+
+.pill-dot-apple {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.gps-dot-apple {
+  background-color: var(--secondary);
+}
+
+.ready-dot-apple {
+  background-color: #34C759;
+}
+
+/* Feature row styling - Apple monochrome */
+.quick-features-row {
+  display: flex;
+  gap: 12px;
+}
+
+.feature-card-apple-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  margin-bottom: 0;
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+}
+
+.feature-icon-circle-apple {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.feature-icon-circle-apple.icon-gray {
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+
+[data-theme='dark'] .feature-icon-circle-apple.icon-gray {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.feat-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px;
+  letter-spacing: -0.2px;
+}
+
+.feat-sub {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* HIGH INTENSITY EMERGENCY OVERLAY - Apple Space Dark Mode */
+.sos-overlay-apple-dark {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0A0A0C; /* High-intensity solid space black background */
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  color: white;
+  overflow-y: auto;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+}
+
+.heartbeat-grid-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 140px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.heartbeat-svg-apple {
+  width: 100%;
+  height: 100%;
+}
+
+.heartbeat-path-apple {
+  stroke-dasharray: 200;
+  animation: drawHeartbeat 2.5s infinite linear;
+}
+
+@keyframes drawHeartbeat {
+  to { stroke-dashoffset: -400; }
+}
+
+.sos-overlay-content-apple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  max-width: 420px;
+  width: 100%;
+}
+
+.alert-header-apple {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.pulsing-shield-alert-apple {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(255, 69, 58, 0.1);
+  border: 1.5px solid var(--danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+  animation: pulseGlow 1.5s infinite ease-in-out;
+}
+
+.red-alert-vector {
+  color: var(--danger);
+}
+
+.alert-title-apple {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: white;
+}
+
+.alert-subtitle-apple {
+  font-size: 13px;
+  color: #8E8E93;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* Countdown Circle */
+.countdown-ring-apple {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.countdown-glow-apple {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 69, 58, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+  filter: blur(8px);
+}
+
+.countdown-value-apple {
+  font-size: 64px;
+  font-weight: 900;
+  color: white;
+  z-index: 2;
+  text-shadow: 0 0 20px rgba(255, 69, 58, 0.6);
+}
+
+.countdown-caption-apple {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FF453A;
+  margin-bottom: 30px;
+}
+
+/* Location Card inside Overlay */
+.alert-location-card-apple {
+  width: 100%;
+  max-width: 380px;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 20px;
+  box-shadow: none;
+}
+
+.alert-location-header-apple {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #8E8E93;
+  margin-bottom: 6px;
+}
+
+.alert-coord-text-apple {
+  font-size: 15px;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 12px;
+}
+
+.maps-apple-btn {
+  height: 40px;
+  font-size: 13px;
+  background: white;
+  color: black;
+  box-shadow: none;
+}
+
+.maps-apple-btn:hover {
+  background: #E5E5EA;
+  box-shadow: none;
+}
+
+/* Dispatch lists */
+.alert-guardians-list-apple {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.guardian-alert-pill {
+  width: 100%;
+  height: 46px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dispatch-badge-apple {
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48px;
-  font-weight: 900;
-  margin-bottom: 16px;
 }
 
-.alert-location-section {
+.spin-white {
+  animation: spinSlow 1.5s linear infinite;
+  color: white;
+}
+
+.check-green {
+  color: #34C759;
+}
+
+/* Cancel Abort Trigger button */
+.btn-cancel-apple {
   width: 100%;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 20px;
-  border-radius: 16px;
+  max-width: 380px;
+  height: 52px;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 26px;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
   margin-bottom: 24px;
 }
 
-.alert-location-section h3 {
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 12px;
-  opacity: 0.8;
+.btn-cancel-apple:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: white;
 }
 
-.coord-text {
-  font-size: 16px;
-  font-family: monospace;
-  margin-bottom: 8px;
-}
-
-.alert-maps-link {
-  color: white;
-  text-decoration: underline;
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.alert-status-section {
-  width: 100%;
-  margin-bottom: auto;
-}
-
-.status-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 12px 16px;
-  border-radius: 12px;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-.btn-cancel-alarm {
-  width: 100%;
-  height: 52px;
-  background-color: white;
-  color: #E82020;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
-  margin-top: 40px;
-  flex-shrink: 0;
-}
-
-/* PIN Modal */
-.pin-modal-overlay {
+/* PIN Modal popup - High-end iOS blur styling */
+.pin-modal-backdrop-apple {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.9);
-  z-index: 2100;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 4000;
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: 20px;
-  backdrop-filter: blur(10px);
+  justify-content: center;
+  padding: 24px;
 }
 
-.pin-modal-box {
-  background-color: var(--bg-card);
+.pin-modal-box-apple {
   width: 100%;
-  max-width: 340px;
-  padding: 32px;
-  border-radius: 24px;
+  max-width: 320px;
+  background: rgba(20, 20, 22, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 32px 24px !important;
   text-align: center;
-  color: var(--text-main);
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.pin-modal-box h3 {
+.pin-secure-lock {
+  color: #FF453A;
+  margin-bottom: 12px;
+}
+
+.pin-modal-box-apple h3 {
   font-size: 18px;
-  margin-bottom: 24px;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.pin-hint-apple-desc {
+  font-size: 12px;
+  color: #8E8E93;
+  margin-bottom: 20px;
   line-height: 1.4;
 }
 
-.pin-modal-box input {
-  width: 100%;
-  height: 60px;
-  background-color: var(--bg-page);
-  border: 2px solid var(--primary);
-  border-radius: 16px;
-  font-size: 28px;
+.pin-input-field-apple {
+  width: 140px;
+  height: 52px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
   text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
   letter-spacing: 8px;
   margin-bottom: 12px;
-  color: var(--text-main);
+  transition: border-color 0.2s ease;
 }
 
-.pin-error {
-  color: var(--danger);
-  font-size: 14px;
-  margin-bottom: 20px;
+.pin-input-field-apple:focus {
+  border-color: #FF453A;
+  outline: none;
 }
 
-.pin-modal-actions {
+.pin-error-apple {
+  color: #FF453A;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.pin-actions-apple-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
 }
 
-.pin-modal-actions button {
+.pin-confirm-apple {
+  flex: 1.3;
+  height: 44px;
+  border-radius: 22px;
+  background: var(--gradient-sos);
+}
+
+.pin-back-apple {
   flex: 1;
-  height: 48px;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  border: none;
+  height: 44px;
+  border-radius: 22px;
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #8E8E93;
 }
 
-.btn-back {
-  background-color: var(--bg-page);
-  color: var(--text-muted);
-}
-
-.btn-confirm {
-  background-color: var(--primary);
+.pin-back-apple:hover {
+  border-color: rgba(255, 255, 255, 0.3);
   color: white;
+  background: transparent;
 }
 
-/* Toast */
+/* Toast message notification */
 .toast-container {
   position: fixed;
-  top: 20px;
+  top: 80px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #2ecc71;
+  background: rgba(20, 20, 22, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   color: white;
-  padding: 12px 24px;
-  border-radius: 30px;
-  font-weight: 700;
-  z-index: 3000;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 13px;
+  font-weight: 600;
+  z-index: 5000;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  animation: pageFadeIn 0.3s ease-out;
 }
 
 .toast-container.error {
-  background-color: #e74c3c;
+  border-color: rgba(255, 69, 58, 0.3);
+  color: #FF453A;
 }
 
-.pin-error-text {
-  color: var(--danger);
-  font-size: 14px;
-  margin-bottom: 16px;
+/* Automatic responsive overrides for dashboard */
+@media (min-width: 768px) {
+  .home-screen {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 28px;
+    align-items: stretch;
+  }
+
+  .greeting-card-apple {
+    grid-column: span 2;
+    padding: 32px;
+    margin-bottom: 0;
+  }
+
+  .sos-section-apple {
+    grid-column: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 32px 24px;
+    margin-bottom: 0;
+  }
+
+  .device-diagnostics-card-apple {
+    grid-column: 2;
+    margin-top: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .quick-features-row {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    justify-content: center;
+  }
+
+  .feature-card-apple-item {
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .hero-name-apple {
+    font-size: 34px;
+  }
+
+  .greeting-right-apple {
+    margin-right: 10px;
+  }
+
+  .toast-container {
+    top: 100px;
+  }
 }
 
-.pin-actions {
+/* Device Diagnostics panel styling */
+.device-diagnostics-card-apple {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  padding: 22px;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  margin-top: 0;
+  gap: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
 }
 
-.pin-actions button {
-  flex: 1;
-  height: 48px;
-  border-radius: 12px;
-  border: none;
+.diagnostics-header-apple {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
   font-weight: 700;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.icon-apple-cpu {
+  color: #8E8E93;
+}
+
+.diagnostics-status-row-apple {
+  display: flex;
+  gap: 16px;
+  background: #F5F5F7;
+  padding: 12px 16px;
+  border-radius: 12px;
+}
+
+.diag-indicator-apple {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.indicator-label-apple {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.indicator-value-apple {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-green-text {
+  color: #34C759;
+}
+
+.small-pulse-dot-green-apple {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #34C759;
+  display: inline-block;
+  box-shadow: 0 0 8px rgba(52, 199, 89, 0.6);
+  animation: miniPulseGreen 2s infinite ease-in-out;
+}
+
+@keyframes miniPulseGreen {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.diagnostics-running-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 16px 0;
+  border: 1px dashed rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.01);
+}
+
+.spinner-mini {
+  color: var(--text-muted);
+  animation: spin 1s infinite linear;
+}
+
+.diagnostics-checklist-apple {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: pageFadeIn 0.3s ease-out;
+}
+
+.checklist-item-apple {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.icon-green-check {
+  color: #34C759;
+  flex-shrink: 0;
+}
+
+.recheck-btn-apple,
+.run-diagnostics-btn-apple {
+  width: 100%;
+  height: 40px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.pin-actions button.confirm {
-  background-color: var(--primary);
+.run-diagnostics-btn-apple {
+  background: #1C1C1E;
   color: white;
+  border: none;
 }
 
-.pin-popup-box svg {
-  color: var(--primary);
+.run-diagnostics-btn-apple:hover {
+  background: black;
+  transform: translateY(-1px);
+}
+
+.recheck-btn-apple {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: white;
+  color: var(--text-main);
+}
+
+.recheck-btn-apple:hover {
+  background: #F5F5F7;
+}
+
+.police-alert-pill-apple {
+  background: rgba(255, 69, 58, 0.12) !important;
+  border: 1px solid rgba(255, 69, 58, 0.25) !important;
+  color: #FF453A !important;
+}
+
+/* Guardian Console Custom Styling */
+.tracking-section-guardian {
+  text-align: center;
+  padding: 30px 20px !important;
+}
+
+.guardian-tracking-hero-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.companion-radar-outer {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(0, 122, 255, 0.05);
+  border: 1px solid rgba(0, 122, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  position: relative;
+  animation: radar-glow 3s infinite ease-in-out;
+}
+
+.companion-radar-inner {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(0, 122, 255, 0.12);
+  border: 1px solid rgba(0, 122, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.guardian-emoji-center {
+  font-size: 32px;
+}
+
+.guardian-tracking-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+.guardian-quick-actions {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.guardian-track-btn {
+  background: var(--secondary) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+}
+
+.guardian-track-btn:hover {
+  background: var(--text-label) !important;
+  box-shadow: 0 6px 18px rgba(0, 122, 255, 0.4);
+}
+
+@keyframes radar-glow {
+  0% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 122, 255, 0.05); }
+  50% { transform: scale(1.04); box-shadow: 0 0 20px rgba(0, 122, 255, 0.15); }
+  100% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 122, 255, 0.05); }
 }

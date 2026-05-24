@@ -1,0 +1,442 @@
+.public-tracker-container {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+  background-color: #1C1C1E; /* Space Gray default */
+  color: #F5F5F7;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.full-screen-map-element {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Hide Leaflet control elements for premium custom look */
+.leaflet-control-container {
+  display: none !important;
+}
+
+/* Flashing SOS Header Overlay */
+.sos-emergency-flasher-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #FF453A;
+  color: white;
+  text-align: center;
+  font-weight: 800;
+  font-size: 13px;
+  padding: 8px 12px;
+  z-index: 100;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 15px rgba(255, 69, 58, 0.4);
+  animation: emergency-flash-bar 1.5s infinite alternate;
+}
+
+/* Top Floating Badges (LIVE tag) */
+.top-badges-panel {
+  position: absolute;
+  top: 24px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* Adjust top badges down slightly if emergency SOS bar is active */
+.sos-emergency-flasher-bar ~ .top-badges-panel {
+  top: 50px;
+}
+
+.live-status-pill {
+  background: rgba(28, 28, 30, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 6px 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+}
+
+.live-dot {
+  font-size: 10px;
+  animation: blink-indicator 1.2s infinite;
+}
+
+.live-text {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #FF453A;
+}
+
+/* Cupertino Floating Top Header Card */
+.floating-header-panel {
+  position: absolute;
+  top: 24px;
+  left: 20px;
+  right: 80px; /* Leave space for LIVE badge */
+  z-index: 10;
+  background: rgba(28, 28, 30, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+}
+
+.sos-emergency-flasher-bar ~ .floating-header-panel {
+  top: 50px;
+}
+
+.header-avatar-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  box-shadow: inset 0 0 10px rgba(255,255,255,0.05);
+}
+
+.header-details-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.header-title-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #F5F5F7;
+  letter-spacing: -0.2px;
+}
+
+.header-subtitle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subtitle-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.last-updated-tag {
+  background: rgba(255, 255, 255, 0.1);
+  color: #8E8E93;
+}
+
+.speed-tag {
+  background: rgba(255, 55, 95, 0.15);
+  color: #FF375F;
+}
+
+.speed-tag[data-moving="true"] {
+  background: rgba(48, 209, 88, 0.15);
+  color: #30D158;
+}
+
+/* Floating Bottom Control Deck */
+.floating-bottom-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  right: 20px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.telemetry-coordinates-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.telemetry-coord-pill {
+  background: rgba(28, 28, 30, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 10px 14px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.telemetry-label {
+  font-size: 9px;
+  font-weight: 700;
+  color: #8E8E93;
+  letter-spacing: 0.5px;
+}
+
+.telemetry-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: #F5F5F7;
+  font-family: Menlo, Monaco, Consolas, monospace;
+}
+
+.telemetry-actions-panel {
+  background: rgba(28, 28, 30, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.btn-control {
+  height: 48px;
+  border-radius: 24px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recenter-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #F5F5F7;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.recenter-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.navigate-btn {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 55, 95, 0.2);
+}
+
+.navigate-btn:hover {
+  box-shadow: 0 6px 18px rgba(255, 55, 95, 0.35);
+  transform: translateY(-1px);
+}
+
+.guardian-share-btn {
+  background: rgba(0, 122, 255, 0.1);
+  color: #0A84FF;
+  border: 1px solid rgba(0, 122, 255, 0.2);
+}
+
+.guardian-share-btn.active-sharing {
+  background: #007AFF;
+  color: white;
+  border-color: #007AFF;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.pulse-green {
+  animation: signal-beacon-pulse 1.5s infinite;
+}
+
+/* Custom Div Icon Styles (Leaflet Map Pins) */
+.leaflet-custom-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-map-marker-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-avatar-core {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+  z-index: 5;
+  border: 2px solid white;
+}
+
+/* Pulsing Ring for Tracked User Icon */
+.pulsing-marker-ring {
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 3px solid #FF453A;
+  background-color: rgba(255, 69, 58, 0.15);
+  animation: marker-radar-ring 1.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  z-index: 1;
+}
+
+/* Public Loading Screen & Handshaking relay */
+.public-loading-screen-apple {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1C1C1E;
+  padding: 24px;
+}
+
+.loading-content-apple {
+  text-align: center;
+  max-width: 340px;
+}
+
+.pulsing-shield-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  background: rgba(255, 55, 95, 0.1);
+  border: 1px solid rgba(255, 55, 95, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px auto;
+  color: #FF375F;
+  animation: pulse-shield-loader 2s infinite alternate;
+}
+
+.loading-content-apple h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #F5F5F7;
+}
+
+.loading-content-apple p {
+  font-size: 13px;
+  color: #8E8E93;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.public-spinner {
+  color: #FF375F;
+  margin: 0 auto;
+}
+
+/* Error UI Style */
+.error-shield {
+  color: #FF453A;
+  margin-bottom: 20px;
+}
+
+.retry-btn-apple {
+  height: 44px;
+  padding: 0 24px;
+  border-radius: 22px;
+  background: #FF375F;
+  color: white;
+  border: none;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(255, 55, 95, 0.2);
+  transition: all 0.2s ease;
+}
+
+.retry-btn-apple:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 15px rgba(255, 55, 95, 0.3);
+}
+
+/* Keyframe Animations */
+@keyframes marker-radar-ring {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+@keyframes signal-beacon-pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+@keyframes blink-indicator {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes pulse-shield-loader {
+  0% { transform: scale(1); box-shadow: 0 0 10px rgba(255,55,95,0.1); }
+  100% { transform: scale(1.08); box-shadow: 0 0 25px rgba(255,55,95,0.3); }
+}
+
+@keyframes emergency-flash-bar {
+  0% { background-color: #FF453A; }
+  100% { background-color: #BF2A21; }
+}
+
+/* Media Queries for Responsive adjustments */
+@media (min-width: 768px) {
+  .public-tracker-container {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .floating-header-panel {
+    max-width: 400px;
+    left: 24px;
+    right: auto;
+  }
+
+  .floating-bottom-controls {
+    max-width: 400px;
+    left: 24px;
+    right: auto;
+  }
+
+  .top-badges-panel {
+    top: 24px;
+    right: 24px;
+  }
+}

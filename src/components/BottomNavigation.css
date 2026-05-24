@@ -1,15 +1,20 @@
+/* SafeHer Premium Apple Bottom Navigation CSS */
+
 .bottom-nav {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 64px;
-  background-color: var(--nav-bg);
+  height: 80px;
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   justify-content: space-around;
   align-items: center;
   border-top: 1px solid var(--nav-border);
   z-index: 1000;
+  padding: 0 16px;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -19,56 +24,60 @@
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  color: #888;
+  color: var(--text-muted);
   flex: 1;
   height: 100%;
   position: relative;
-  transition: color 0.3s ease;
+  transition: all 0.2s ease;
+}
+
+.nav-tab-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 52px;
+  transition: all 0.2s ease;
 }
 
 .nav-icon {
-  width: 20px;
-  height: 20px;
-  margin-bottom: 2px;
+  width: 22px;
+  height: 22px;
+  margin-bottom: 3px;
+  transition: transform 0.2s ease;
 }
 
 .nav-label {
   font-size: 11px;
   font-weight: 500;
+  transition: all 0.2s ease;
 }
 
+/* Tab Active State (Apple Native Style) */
 .nav-tab.active {
-  color: var(--primary);
+  color: var(--secondary); /* Clean System Pink */
+}
+
+.nav-tab.active .nav-icon {
+  color: var(--secondary) !important;
+  transform: scale(1.05);
 }
 
 .nav-tab.active .nav-label {
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.active-dot {
-  position: absolute;
-  top: 6px;
-  width: 4px;
-  height: 4px;
-  background-color: var(--primary);
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+/* Inactive States */
+.nav-tab:not(.active) .nav-icon {
+  color: var(--text-muted);
 }
 
-.nav-tab.active .active-dot {
-  opacity: 1;
-}
-
-[data-theme='dark'] .bottom-nav {
-  background-color: #1A1A2E;
-  border-top: 1px solid #2A2A3E;
-}
-
-[data-theme='dark'] .nav-tab {
-  color: #777;
-}
-
-[data-theme='dark'] .nav-tab.active {
-  color: var(--primary);
+/* Desktop layout overrides */
+@media (min-width: 768px) {
+  .bottom-nav {
+    border-radius: 0 0 24px 24px;
+    height: 72px;
+    padding-bottom: 0;
+  }
 }

@@ -1,123 +1,672 @@
+/* SafeHer Premium Apple Settings Screen CSS */
+
 .settings-screen {
-  padding: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background-color: var(--bg-page);
 }
 
-.screen-header {
-  margin-bottom: 24px;
-  padding: 8px 0;
+.settings-loading {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.profile-card {
+/* Profile Hero Card */
+.settings-hero-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 32px 24px;
+  color: var(--text-main);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 24px;
-  margin-bottom: 24px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
 }
 
-.profile-photo-img {
-  width: 64px;
-  height: 64px;
+.profile-photo-container-apple {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 16px;
   border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+  overflow: hidden; /* Hide bottom text details */
+}
+
+.settings-profile-img-apple {
+  width: 72px;
+  height: 72px;
   object-fit: cover;
-  margin-bottom: 12px;
-  border: 2px solid var(--primary);
+  transform: translateY(6px) scale(1.15); /* Center silhouettes perfectly */
 }
 
-.profile-name {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 2px;
+.settings-profile-name-apple {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--text-main);
+  margin-bottom: 2px;
+  letter-spacing: -0.4px;
 }
 
-.profile-email {
+.settings-profile-email-apple {
   font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 16px;
+}
+
+.badge-premium-apple {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  padding: 5px 14px;
+  border-radius: 50px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+[data-theme='dark'] .badge-premium-apple {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Settings Form List */
+.settings-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-item-card-premium {
+  padding: 20px;
+  margin-bottom: 0;
+  box-shadow: var(--shadow);
+}
+
+.input-label-premium {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.icon-apple-settings {
+  color: var(--secondary);
+}
+
+/* Read-Only Disabled Field */
+.input-field-premium-disabled {
+  width: 100%;
+  height: 48px;
+  background-color: rgba(0, 0, 0, 0.03);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
-.settings-item-card {
-  margin-bottom: 12px;
-  padding: 16px;
+[data-theme='dark'] .input-field-premium-disabled {
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
-.toggle-card {
+/* Standard Inputs */
+.settings-item-card-premium .input-field-premium {
+  height: 48px;
+  border-radius: 12px;
+  padding-left: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.settings-textarea {
+  min-height: 80px;
+  padding: 12px 16px !important;
+  line-height: 1.5;
+  resize: none;
+  font-family: inherit;
+}
+
+.settings-helper-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 8px;
+  padding-left: 2px;
+}
+
+/* Toggle Switch - Apple iOS Style switch */
+.settings-toggle-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.toggle-info strong {
-  font-size: 15px;
-  color: var(--text-main);
+.settings-toggle-left {
+  display: flex;
+  flex-direction: column;
 }
 
-.helper-text {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
-.about-card {
-  padding: 16px;
-  margin-top: 10px;
-}
-
-.about-card p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
-.small-helper {
-  font-size: 11px !important;
-  opacity: 0.7;
-}
-
-.about-row {
+.toggle-label-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
 }
 
-.save-settings-btn {
-  margin-top: 20px;
-  height: 52px;
-  border-radius: 16px;
+.toggle-label-row strong {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.apple-switch {
+  position: relative;
+  display: inline-block;
+  width: 51px;
+  height: 31px;
+}
+
+.apple-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.apple-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(120, 120, 128, 0.16);
+  transition: .3s;
+  border-radius: 34px;
+}
+
+.apple-slider:before {
+  position: absolute;
+  content: "";
+  height: 27px;
+  width: 27px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .3s;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.apple-switch input:checked + .apple-slider {
+  background-color: #34C759; /* Apple iOS Active Green switch */
+}
+
+.apple-switch input:checked + .apple-slider:before {
+  transform: translateX(20px);
+}
+
+/* About App Section */
+.settings-about-card {
+  padding: 20px;
+  margin-bottom: 0;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.about-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 12px;
 }
 
-.btn-signout {
-  width: 100%;
-  height: 52px;
-  background: transparent;
-  border: 1px solid var(--danger);
-  color: var(--danger);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+.about-title-row strong {
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.icon-apple-about {
+  color: var(--text-muted);
+}
+
+.about-text-bold {
+  font-size: 12px;
   font-weight: 700;
-  cursor: pointer;
-  margin-bottom: 40px;
+  color: var(--text-main);
+  margin-bottom: 4px;
 }
 
-.settings-loading {
-  height: calc(100vh - 120px);
+.about-subtext-light {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Save settings button */
+.save-settings-pill-btn {
+  margin-top: 6px;
+}
+
+/* Sign Out button */
+.btn-signout-premium-apple {
+  width: 100%;
+  height: 50px;
+  background: var(--input-bg);
+  border: 1.5px solid rgba(255, 69, 58, 0.2);
+  color: #FF453A;
+  border-radius: 25px; /* iOS pill button */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 30px;
+  box-shadow: var(--shadow);
+}
+
+.btn-signout-premium-apple:hover {
+  background-color: rgba(255, 69, 58, 0.04);
+  border-color: #FF453A;
+}
+
+.btn-signout-premium-apple:active {
+  transform: scale(0.98);
+}
+
+.settings-error-text-apple {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.settings-success-text-apple {
+  color: #34C759;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* AUTOMATIC RESPONSIVE WEB DASHBOARD */
+@media (min-width: 768px) {
+  .settings-hero-card {
+    height: 100%;
+  }
+}
+
+/* Hardware pairing widget styling */
+.device-pairing-card-apple {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.icon-ble-purple {
+  color: #5E5CE6 !important; /* Premium Indigo BLE color */
+}
+
+.paired-device-row-apple {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.device-spec-info-apple {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.icon-device-apple {
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.04);
+  padding: 8px;
+  border-radius: 50%;
+  box-sizing: content-box;
+}
+
+[data-theme="dark"] .icon-device-apple {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.device-spec-info-apple strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text-main);
+}
+
+.device-id-subtext {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.connection-badge-active-apple {
+  background: rgba(52, 199, 89, 0.12);
+  color: #34C759;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid rgba(52, 199, 89, 0.2);
+}
+
+.device-stats-grid-apple {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.device-stat-pill {
+  background: #F5F5F7;
+  padding: 10px 14px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+[data-theme="dark"] .device-stat-pill {
+  background: #1C1C1E;
+}
+
+.stat-label-apple {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.device-stat-pill strong {
+  font-size: 14px;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.btn-disconnect-apple {
+  width: 100%;
+  height: 40px;
+  border: 1px solid rgba(255, 69, 58, 0.2);
+  color: #FF453A;
+  background: white;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .btn-disconnect-apple {
+  background: transparent;
+  border-color: rgba(255, 69, 58, 0.4);
+}
+
+.btn-disconnect-apple:hover {
+  background: rgba(255, 69, 58, 0.05);
+}
+
+/* Unpaired & Scanning & Success structures */
+.pairing-unpaired-state-apple {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pairing-intro-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.btn-pair-device-apple {
+  width: 100%;
+  height: 44px;
+  border: none;
+  background: #1C1C1E;
+  color: white;
+  border-radius: 22px;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .btn-pair-device-apple {
+  background: white;
+  color: black;
+}
+
+.btn-pair-device-apple:hover {
+  background: black;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .btn-pair-device-apple:hover {
+  background: #E5E5EA;
+}
+
+.icon-pulse-radio {
+  animation: pulseBeacon 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseBeacon {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+.pairing-scanning-state-apple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+  animation: pageFadeIn 0.3s ease-out;
+}
+
+.radar-animation-circle-apple {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(94, 92, 230, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.input-label {
+.radar-center-icon-apple {
+  color: #5E5CE6;
+  z-index: 5;
+}
+
+.radar-wave-apple {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(94, 92, 230, 0.3);
+  pointer-events: none;
+  animation: radarWaveOut 2.5s infinite linear;
+}
+
+.wave-2 {
+  animation-delay: 1.25s;
+}
+
+@keyframes radarWaveOut {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.pairing-success-state-apple {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 0;
+  gap: 8px;
+  animation: pageFadeIn 0.3s ease-out;
+}
+
+.pairing-success-check-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(52, 199, 89, 0.1);
   display: flex;
   align-items: center;
+  justify-content: center;
+  border: 1.5px solid rgba(52, 199, 89, 0.3);
+  margin-bottom: 8px;
+}
+
+.icon-success-check {
+  color: #34C759;
+}
+
+.pairing-success-state-apple strong {
+  font-size: 15px;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.pairing-success-state-apple span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* SIM Cellular Phone Input styles */
+.sim-input-row-apple {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 0 16px;
+  height: 48px;
+  transition: border-color 0.2s ease;
+}
+
+.sim-input-row-apple:focus-within {
+  border-color: #5E5CE6;
+}
+
+.sim-country-prefix-apple {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+  border-right: 1px solid var(--border);
+  padding-right: 10px;
+}
+
+.sim-phone-input-apple {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  height: 100% !important;
+  font-weight: 600 !important;
+  color: var(--text-main) !important;
+  box-shadow: none !important;
+}
+
+/* Instruction card tips */
+.pairing-instruction-card-apple {
+  background: #F5F5F7;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
 }
 
-textarea.input-field {
-  padding: 12px 16px;
-  min-height: 100px;
+[data-theme="dark"] .pairing-instruction-card-apple {
+  background: #1C1C1E;
+}
+
+.instruction-badge-apple {
+  background: #E5E5EA;
+  color: #1C1C1E;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .instruction-badge-apple {
+  background: #3A3A3C;
+  color: white;
+}
+
+.pairing-status-log-apple {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-align: center;
+  max-width: 260px;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+.icon-cellular-antenna-apple {
+  color: #5E5CE6;
+  animation: pulseBeacon 1.2s infinite ease-in-out;
 }

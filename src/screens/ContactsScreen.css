@@ -1,99 +1,289 @@
+/* SafeHer Premium Apple Contacts Screen CSS */
+
 .contacts-screen {
-  padding: 16px;
-}
-
-.screen-header {
-  margin-bottom: 24px;
-  padding: 8px 0;
-}
-
-.error-text {
-  color: var(--danger);
-  font-size: 13px;
-  margin-bottom: 12px;
-}
-
-.section-title {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  color: var(--text-main);
-}
-
-.contact-row-card {
+  padding: 20px;
   display: flex;
-  align-items: center;
-  padding: 12px;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 20px;
+  background-color: var(--bg-page);
 }
 
-.contact-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: var(--primary);
-  color: white;
+.contacts-screen-loading {
+  min-height: calc(100vh - 120px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 18px;
-  margin-right: 12px;
 }
 
-.contact-info {
-  flex: 1;
+/* Curved Hero Banner - Apple Clean style */
+.contacts-hero-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow);
+}
+
+.contacts-hero-left {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-.contact-info strong {
-  font-size: 15px;
+.contacts-apple-shield-icon {
+  color: var(--secondary); /* Rose pink theme marker */
+  margin-bottom: 4px;
+}
+
+.contacts-hero-left h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.4px;
+}
+
+.contacts-hero-left p {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.contacts-capacity-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 50px;
+  letter-spacing: 0.5px;
+}
+
+[data-theme='dark'] .contacts-capacity-badge {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Input Form Section */
+.contacts-input-card {
+  padding: 24px;
+  margin-bottom: 0;
+}
+
+.form-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.form-title-row span {
+  font-size: 14px;
+  font-weight: 700;
   color: var(--text-main);
 }
 
-.contact-info span {
-  font-size: 13px;
-  color: var(--text-muted);
+.icon-apple-form {
+  color: var(--secondary);
 }
 
-.contact-actions {
+.contacts-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Apple Premium Inputs with Active Outline transitions */
+.input-group-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.floating-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding-left: 2px;
+}
+
+.input-wrapper-inner {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.input-field-premium {
+  width: 100%;
+  height: 48px;
+  background-color: var(--input-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 0 16px 0 46px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+
+.input-field-premium:focus {
+  outline: none;
+  border-color: var(--text-main);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.input-group-premium.focused .input-icon {
+  color: var(--text-main);
+}
+
+.contacts-form-error {
+  color: var(--danger);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.contacts-submit-pill {
+  margin-top: 4px;
+}
+
+/* Saved Contacts List Section */
+.contacts-list-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-title-apple {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  padding-left: 4px;
+}
+
+.contacts-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-item-card-premium {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  margin-bottom: 0;
+  box-shadow: var(--shadow);
+  border-left: 3px solid var(--secondary); /* Clean System Pink marker */
+}
+
+.contact-avatar-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--gradient-Sos);
+  background: rgba(255, 55, 95, 0.08);
+  border: 1px solid rgba(255, 55, 95, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+}
+
+.contact-avatar-badge span {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--secondary);
+}
+
+.contact-details-premium {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.contact-details-premium strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.contact-details-premium span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.contact-actions-premium {
   display: flex;
   gap: 10px;
 }
 
-.call-btn-circle, .delete-btn-circle {
+.contact-action-btn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: none;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text-main);
   cursor: pointer;
+  transition: all 0.2s ease;
   text-decoration: none;
 }
 
-.call-btn-circle {
-  background-color: rgba(108, 62, 232, 0.1);
-  color: var(--primary);
+.dial-btn-apple {
+  color: #34C759; /* Apple System Green */
+  border-color: rgba(52, 199, 89, 0.2);
 }
 
-.delete-btn-circle {
-  background-color: var(--danger-light);
+.dial-btn-apple:hover {
+  background: rgba(52, 199, 89, 0.04);
+  border-color: #34C759;
+}
+
+.delete-btn-apple {
   color: var(--danger);
+  border-color: rgba(255, 69, 58, 0.2);
 }
 
-.empty-msg {
+.delete-btn-apple:hover {
+  background: rgba(255, 69, 58, 0.04);
+  border-color: var(--danger);
+}
+
+.empty-list-apple {
+  padding: 32px 24px;
   text-align: center;
-  color: var(--text-muted);
-  margin-top: 40px;
-  font-size: 14px;
+  border-left: none;
 }
 
-.contacts-loading {
-  height: calc(100vh - 120px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.empty-list-apple span {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* AUTOMATIC RESPONSIVE WEB DASHBOARD */
+@media (min-width: 768px) {
+  .contacts-input-card {
+    height: 100%;
+  }
+  .contacts-list-wrapper {
+    height: 100%;
+  }
 }
