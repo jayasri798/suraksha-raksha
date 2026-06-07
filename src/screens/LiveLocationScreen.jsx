@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, MapPin, RefreshCw, Share2, ShieldCheck } from 'lucide-react';
 import './LiveLocationScreen.css';
 
-const LiveLocationScreen = ({ user, globalLocation }) => {
+const LiveLocationScreen = ({ user, globalLocation, onRefreshLocation }) => {
   const [address, setAddress] = useState('Resolving location...');
   const [loadingAddress, setLoadingAddress] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -29,17 +29,24 @@ const LiveLocationScreen = ({ user, globalLocation }) => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    if (globalLocation) {
-      await getAddressFromCoords(globalLocation.lat, globalLocation.lng);
+    if (onRefreshLocation) {
+      onRefreshLocation();
     }
-    setTimeout(() => setRefreshing(false), 800);
+    // Give it a brief moment to acquire fresh coordinates, then resolve
+    setTimeout(async () => {
+      const activeLat = globalLocation?.lat || '16.284583';
+      const activeLng = globalLocation?.lng || '80.457524';
+      await getAddressFromCoords(activeLat, activeLng);
+      setRefreshing(false);
+    }, 1200);
   };
 
   useEffect(() => {
     if (globalLocation) {
       getAddressFromCoords(globalLocation.lat, globalLocation.lng);
     } else {
-      setAddress('Waiting for coordinates from GPS companion...');
+      // Resolve address for default coordinates so it matches the marker on load
+      getAddressFromCoords('16.284583', '80.457524');
     }
   }, [globalLocation]);
 

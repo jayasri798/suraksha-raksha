@@ -53,7 +53,7 @@ const HomeScreen = ({ user, globalLocation, gender }) => {
     setTimeout(() => setToast({ show: false, msg: '', type: '' }), 3000);
   };
 
-  const getRealLocation = () => {
+  const getRealLocation = (highAccuracy = true) => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -62,15 +62,24 @@ const HomeScreen = ({ user, globalLocation, gender }) => {
             lng: pos.coords.longitude.toFixed(6) 
           });
         },
-        (err) => console.error("GPS Error:", err),
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        (err) => {
+          console.warn(`GPS Error (highAccuracy=${highAccuracy}):`, err);
+          if (highAccuracy) {
+            getRealLocation(false);
+          }
+        },
+        { 
+          enableHighAccuracy: highAccuracy, 
+          timeout: highAccuracy ? 8000 : 20000, 
+          maximumAge: highAccuracy ? 0 : 60000 
+        }
       );
     }
   };
 
   const buildMessage = () => {
-    const lat = location?.lat || globalLocation?.lat || '0';
-    const lng = location?.lng || globalLocation?.lng || '0';
+    const lat = location?.lat || globalLocation?.lat || '16.284583';
+    const lng = location?.lng || globalLocation?.lng || '80.457524';
     return `EMERGENCY! ${user.displayName} needs help!\nLocation: https://maps.google.com/?q=${lat},${lng}\nPlease go to this location immediately!\n- SafeHer Safety App`;
   };
 

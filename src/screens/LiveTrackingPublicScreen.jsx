@@ -78,6 +78,9 @@ const LiveTrackingPublicScreen = () => {
           };
           setTrackedLocation(prev => prev ? prev : newLoc);
           setLoading(false);
+        } else {
+          // Allow render even if location is not resolved yet, so visitor doesn't get stuck on spinner
+          setLoading(false);
         }
       } else {
         setError('User profile not found. The link may have expired.');
@@ -182,23 +185,27 @@ const LiveTrackingPublicScreen = () => {
           const mins = Math.floor(diff / 60);
           setLastUpdatedText(`${mins} min ${diff % 60}s ago`);
         }
+      } else {
+        setLastUpdatedText('awaiting GPS signal');
       }
     }, 1000);
     return () => clearInterval(interval);
   }, [trackedLocation]);
 
-  // Set up Map, Markers and Paths when Leaflet and coordinates load
+  // Set up Map, Markers and Paths when Leaflet loads
   useEffect(() => {
-    if (!leafletLoaded || !trackedLocation) return;
+    if (!leafletLoaded) return;
 
     const L = window.L;
+    const activeLat = trackedLocation?.lat || 16.284583;
+    const activeLng = trackedLocation?.lng || 80.457524;
 
     // 1. Initialize Map
     if (!mapRef.current) {
       const map = L.map('live-map', {
         zoomControl: false,
         attributionControl: false
-      }).setView([trackedLocation.lat, trackedLocation.lng], 16);
+      }).setView([activeLat, activeLng], trackedLocation ? 16 : 14);
 
       // Official Google Maps Cartography Tile Layer
       const googleTiles = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
@@ -215,38 +222,40 @@ const LiveTrackingPublicScreen = () => {
       });
 
       mapRef.current = map;
-    } else {
+    } else if (trackedLocation) {
       // Pan smoothly to tracked user
       mapRef.current.panTo([trackedLocation.lat, trackedLocation.lng]);
     }
 
     const map = mapRef.current;
 
-    // 2. Draw/Update Girl Pin with Pulsing Red Ring
-    const isFemale = userData?.gender === 'female';
-    const pinColor = isFemale ? '#FF375F' : '#007AFF';
-    const pinEmoji = isFemale ? '👧' : '👨';
+    // 2. Draw/Update Girl Pin with Pulsing Red Ring (only if location is resolved)
+    if (trackedLocation) {
+      const isFemale = userData?.gender === 'female';
+      const pinColor = isFemale ? '#FF375F' : '#007AFF';
+      const pinEmoji = isFemale ? '👧' : '👨';
 
-    const girlIconHtml = `
-      <div class="custom-map-marker-wrapper">
-        <div class="pulsing-marker-ring"></div>
-        <div class="marker-avatar-core" style="background-color: ${pinColor};">
-          <span>${pinEmoji}</span>
+      const girlIconHtml = `
+        <div class="custom-map-marker-wrapper">
+          <div class="pulsing-marker-ring"></div>
+          <div class="marker-avatar-core" style="background-color: ${pinColor};">
+            <span>${pinEmoji}</span>
+          </div>
         </div>
-      </div>
-    `;
+      `;
 
-    const userIcon = L.divIcon({
-      html: girlIconHtml,
-      className: 'leaflet-custom-div-icon',
-      iconSize: [46, 46],
-      iconAnchor: [23, 23]
-    });
+      const userIcon = L.divIcon({
+        html: girlIconHtml,
+        className: 'leaflet-custom-div-icon',
+        iconSize: [46, 46],
+        iconAnchor: [23, 23]
+      });
 
-    if (!userMarkerRef.current) {
-      userMarkerRef.current = L.marker([trackedLocation.lat, trackedLocation.lng], { icon: userIcon }).addTo(map);
-    } else {
-      userMarkerRef.current.setLatLng([trackedLocation.lat, trackedLocation.lng]);
+      if (!userMarkerRef.current) {
+        userMarkerRef.current = L.marker([trackedLocation.lat, trackedLocation.lng], { icon: userIcon }).addTo(map);
+      } else {
+        userMarkerRef.current.setLatLng([trackedLocation.lat, trackedLocation.lng]);
+      }
     }
 
     // 3. Draw/Update Path Trail (Dotted Polyline)
@@ -326,37 +335,50 @@ const LiveTrackingPublicScreen = () => {
       }
       setGuardianLocation(null);
     } else {
-      // Turn On Location Sharing
       if (!("geolocation" in navigator)) {
         alert("Geolocation is not supported by your browser.");
         return;
       }
 
       setGuardianSharing(true);
-      guardianWatchId.current = navigator.geolocation.watchPosition(
-        async (position) => {
-          const lat = parseFloat(position.coords.latitude.toFixed(6));
-          const lng = parseFloat(position.coords.longitude.toFixed(6));
-          
-          try {
-            const guardianLocRef = doc(db, "users", userId, "location", "guardian");
-            await setDoc(guardianLocRef, {
-              lat,
-              lng,
-              updatedAt: new Date().toISOString(),
-              active: true
-            });
-          } catch (err) {
-            console.error("Error writing guardian coordinates:", err);
+      
+      const startWatchingGuardian = (highAccuracy = true) => {
+        guardianWatchId.current = navigator.geolocation.watchPosition(
+          async (position) => {
+            const lat = parseFloat(position.coords.latitude.toFixed(6));
+            const lng = parseFloat(position.coords.longitude.toFixed(6));
+            
+            try {
+              const guardianLocRef = doc(db, "users", userId, "location", "guardian");
+              await setDoc(guardianLocRef, {
+                lat,
+                lng,
+                updatedAt: new Date().toISOString(),
+                active: true
+              });
+            } catch (err) {
+              console.error("Error writing guardian coordinates:", err);
+            }
+          },
+          (err) => {
+            console.warn(`Guardian GPS Error (highAccuracy=${highAccuracy}):`, err);
+            if (highAccuracy) {
+              navigator.geolocation.clearWatch(guardianWatchId.current);
+              startWatchingGuardian(false);
+            } else {
+              alert("Failed to acquire GPS lock. Please enable location services.");
+              setGuardianSharing(false);
+            }
+          },
+          { 
+            enableHighAccuracy: highAccuracy, 
+            timeout: highAccuracy ? 8000 : 20000, 
+            maximumAge: highAccuracy ? 0 : 60000 
           }
-        },
-        (err) => {
-          console.error("Guardian GPS Error:", err);
-          alert("Failed to acquire GPS lock. Please enable location services.");
-          setGuardianSharing(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
+        );
+      };
+
+      startWatchingGuardian(true);
     }
   };
 
@@ -448,11 +470,11 @@ const LiveTrackingPublicScreen = () => {
         <div className="telemetry-coordinates-grid">
           <div className="telemetry-coord-pill">
             <span className="telemetry-label">LATITUDE</span>
-            <span className="telemetry-value">{trackedLocation?.lat.toFixed(6)}</span>
+            <span className="telemetry-value">{trackedLocation ? trackedLocation.lat.toFixed(6) : '---'}</span>
           </div>
           <div className="telemetry-coord-pill">
             <span className="telemetry-label">LONGITUDE</span>
-            <span className="telemetry-value">{trackedLocation?.lng.toFixed(6)}</span>
+            <span className="telemetry-value">{trackedLocation ? trackedLocation.lng.toFixed(6) : '---'}</span>
           </div>
         </div>
 

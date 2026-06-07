@@ -37,12 +37,23 @@ function AppContent() {
       setAuthLoading(false);
       
       if (authUser) {
-        // Fetch user doc to check gender
         setGenderLoading(true);
         try {
           const userDoc = await getDoc(doc(db, "users", authUser.uid));
-          if (userDoc.exists() && userDoc.data().gender) {
-            setGender(userDoc.data().gender);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.gender) {
+              setGender(data.gender);
+            } else {
+              setGender(null);
+            }
+            // Load last known location from Firestore immediately
+            if (data.location && data.location.lat && data.location.lng) {
+              setLocation({
+                lat: data.location.lat.toFixed(6),
+                lng: data.location.lng.toFixed(6)
+              });
+            }
           } else {
             setGender(null);
           }
@@ -58,19 +69,36 @@ function AppContent() {
     return () => unsubscribe();
   }, []);
 
-  // Geolocation watch location listener
+  // Geolocation watch location listener (with low-accuracy fallback)
   useEffect(() => {
     if ("geolocation" in navigator) {
-      const watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude.toFixed(6),
-            lng: position.coords.longitude.toFixed(6)
-          });
-        },
-        (error) => console.error("Error watching location:", error),
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
+      let watchId;
+      
+      const startWatching = (highAccuracy = true) => {
+        watchId = navigator.geolocation.watchPosition(
+          (position) => {
+            setLocation({
+              lat: position.coords.latitude.toFixed(6),
+              lng: position.coords.longitude.toFixed(6)
+            });
+          },
+          (error) => {
+            console.warn(`Error watching location (highAccuracy=${highAccuracy}):`, error);
+            // If high accuracy times out/fails, fallback to standard accuracy
+            if (highAccuracy) {
+              navigator.geolocation.clearWatch(watchId);
+              startWatching(false);
+            }
+          },
+          { 
+            enableHighAccuracy: highAccuracy, 
+            timeout: highAccuracy ? 8000 : 20000, 
+            maximumAge: highAccuracy ? 0 : 60000 
+          }
+        );
+      };
+
+      startWatching(true);
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
@@ -80,7 +108,6 @@ function AppContent() {
     if (user && location) {
       const syncLocation = async () => {
         try {
-          // Set in users/{userId} nested object
           const userRef = doc(db, "users", user.uid);
           await setDoc(userRef, {
             location: {
@@ -90,7 +117,6 @@ function AppContent() {
             }
           }, { merge: true });
 
-          // Also set in users/{userId}/location/current subcollection document
           const currentLocRef = doc(db, "users", user.uid, "location", "current");
           await setDoc(currentLocRef, {
             lat: parseFloat(location.lat),
@@ -104,6 +130,34 @@ function AppContent() {
       syncLocation();
     }
   }, [user, location]);
+
+  const refreshLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude.toFixed(6),
+            lng: position.coords.longitude.toFixed(6)
+          });
+        },
+        (error) => {
+          console.error("Error manual-refreshing location:", error);
+          // Retry with low accuracy if manual refresh failed
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              setLocation({
+                lat: pos.coords.latitude.toFixed(6),
+                lng: pos.coords.longitude.toFixed(6)
+              });
+            },
+            (err) => console.error("Low accuracy refresh fallback failed:", err),
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 }
+          );
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    }
+  };
 
   useEffect(() => {
     if (isDark) {
@@ -187,7 +241,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<HomeScreen user={user} globalLocation={location} gender={gender} />} />
           <Route path="/contacts" element={<ContactsScreen user={user} />} />
-          <Route path="/location" element={<LiveLocationScreen user={user} globalLocation={location} />} />
+          <Route path="/location" element={<LiveLocationScreen user={user} globalLocation={location} onRefreshLocation={refreshLocation} />} />
           <Route path="/settings" element={<SettingsScreen user={user} isDark={isDark} setIsDark={setIsDark} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
