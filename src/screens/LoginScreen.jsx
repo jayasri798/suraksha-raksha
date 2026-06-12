@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { auth, provider } from '../firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect } from 'firebase/auth';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import './LoginScreen.css';
 
@@ -14,8 +14,22 @@ const LoginScreen = () => {
     try {
       await signInWithPopup(auth, provider);
     } catch (err) {
-      console.error(err);
-      setError('Failed to sign in. Please try again.');
+      console.error("Google Sign-In Error details:", err);
+      if (err.code === 'auth/popup-blocked') {
+        setError('Popup blocked by browser. Trying redirect instead...');
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (redirErr) {
+          console.error("Redirect Error:", redirErr);
+          setError(`Sign-in failed: ${redirErr.message}`);
+        }
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError('Google Sign-In is not enabled in your Firebase console. Please go to Authentication > Sign-in method and enable Google.');
+      } else if (err.code === 'auth/unauthorized-domain') {
+        setError('This domain is not authorized in your Firebase console. Please add this domain under Authentication > Settings > Authorized domains.');
+      } else {
+        setError(`Failed to sign in: ${err.message || err.code || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
