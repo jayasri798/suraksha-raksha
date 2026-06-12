@@ -133,7 +133,7 @@ Existing women's safety solutions in India exhibit critical architectural limita
 ```
 🚨 EMERGENCY! Jayasri needs help immediately!
 📍 Current Location: https://maps.google.com/?q=16.284583,80.457524
-🗺️ Track her LIVE: https://suraksha-five.vercel.app/track/userId123
+🗺️ Track her LIVE: https://suraksha-raksha.vercel.app/track/userId123
 Location updates every 30 seconds automatically.
 — Suraksha Safety App
 ```
@@ -250,7 +250,7 @@ RX (Receive)    =====>  GPIO7 (Software TX)
 * **Database**: Firebase Firestore — real-time synchronization of contact networks and profile attributes.
 * **Deployment**: Vercel — automatic CI/CD deployment pipelines linked directly to GitHub.
 * **Repository**: `github.com/jayasri798/suraksha`
-* **Live URL**: `suraksha-five.vercel.app`
+* **Live URL**: `suraksha-raksha.vercel.app`
 
 ### 8.2 App Screens
 
