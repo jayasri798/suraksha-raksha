@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   
   for (const phone of phones) {
     try {
-      let cleaned = phone.replace(/[\s\-\+]/g, '');
+      let cleaned = phone.replace(/[\s\-+]/g, '');
       if (cleaned.startsWith('91') && cleaned.length === 12) {
         cleaned = cleaned.substring(2);
       }

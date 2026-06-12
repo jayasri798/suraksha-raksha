@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { Users, Phone, Trash2, Loader2, UserPlus, ShieldCheck } from 'lucide-react';
@@ -13,7 +13,7 @@ const ContactsScreen = ({ user }) => {
   const [error, setError] = useState('');
   const [focusedField, setFocusedField] = useState('');
 
-  const fetchContacts = async () => {
+  const fetchContacts = useCallback(async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "users", user.uid, "contacts"));
       const list = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -23,11 +23,13 @@ const ContactsScreen = ({ user }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user.uid]);
 
   useEffect(() => {
-    fetchContacts();
-  }, [user.uid]);
+    Promise.resolve().then(() => {
+      fetchContacts();
+    });
+  }, [fetchContacts]);
 
   const handleAddContact = async (e) => {
     e.preventDefault();

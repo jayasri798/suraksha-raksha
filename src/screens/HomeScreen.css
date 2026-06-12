@@ -1,4 +1,4 @@
-/* SafeHer Premium Apple HomeScreen CSS */
+/* Suraksha Premium Apple HomeScreen CSS */
 
 .home-screen {
   padding: 20px;
@@ -956,3 +956,168 @@
   50% { transform: scale(1.04); box-shadow: 0 0 20px rgba(0, 122, 255, 0.15); }
   100% { transform: scale(1); box-shadow: 0 0 10px rgba(0, 122, 255, 0.05); }
 }
+
+/* Mode-Specific Status and Alert Banner CSS */
+.hardware-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+  border: 1.5px solid transparent;
+  color: white;
+  animation: slideDownToast 0.4s cubic-bezier(0.16, 1, 0.3, 1), pulseGlowBanner 2s infinite ease-in-out;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.fall-alert-glowing {
+  background: linear-gradient(135deg, #FF453A, #FF9500);
+  border-color: rgba(255, 69, 58, 0.4);
+}
+
+.sound-alert-glowing {
+  background: linear-gradient(135deg, #FF375F, #5856D6);
+  border-color: rgba(255, 55, 95, 0.4);
+}
+
+.safezone-alert-glowing {
+  background: linear-gradient(135deg, #FF453A, #FF375F);
+  border-color: rgba(255, 69, 58, 0.4);
+}
+
+.hardware-alert-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bell-ringing {
+  font-size: 24px;
+  animation: ringBellAnim 0.5s ease infinite alternate;
+}
+
+.hardware-alert-left strong {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+.hardware-alert-left p {
+  font-size: 12px;
+  opacity: 0.9;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.dismiss-alert-btn {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dismiss-alert-btn:hover {
+  background: white;
+  color: #FF453A;
+}
+
+.hardware-status-dashboard-card {
+  padding: 22px;
+}
+
+.sensor-status-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.sensor-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1.5px solid var(--border);
+  background: var(--bg-page);
+  transition: all 0.3s ease;
+}
+
+.sensor-emoji {
+  font-size: 24px;
+}
+
+.sensor-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sensor-info strong {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.sensor-info span {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.sensor-status-pill.normal-active {
+  border-color: rgba(52, 199, 89, 0.3);
+  background: rgba(52, 199, 89, 0.05);
+}
+
+.sensor-status-pill.normal-active .sensor-info span {
+  color: #34C759;
+}
+
+.sensor-status-pill.alert-active {
+  border-color: rgba(255, 69, 58, 0.3);
+  background: rgba(255, 69, 58, 0.06);
+  animation: pulsePillAlert 2s infinite ease-in-out;
+}
+
+.sensor-status-pill.alert-active .sensor-info span {
+  color: #FF453A;
+}
+
+.sensor-status-pill.inactive {
+  border-color: var(--border);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.sensor-status-pill.inactive .sensor-info span {
+  color: var(--text-muted);
+}
+
+@keyframes slideDownToast {
+  0% { transform: translateY(-20px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulseGlowBanner {
+  0% { box-shadow: 0 8px 20px rgba(255, 69, 58, 0.15); }
+  50% { box-shadow: 0 12px 30px rgba(255, 69, 58, 0.35); }
+  100% { box-shadow: 0 8px 20px rgba(255, 69, 58, 0.15); }
+}
+
+@keyframes pulsePillAlert {
+  0% { border-color: rgba(255, 69, 58, 0.3); }
+  50% { border-color: rgba(255, 69, 58, 0.7); }
+  100% { border-color: rgba(255, 69, 58, 0.3); }
+}
+
+@keyframes ringBellAnim {
+  0% { transform: rotate(-8deg); }
+  100% { transform: rotate(8deg); }
+}
+

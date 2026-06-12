@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, Loader2 } from 'lucide-react';
-import { auth, db } from './firebase';
+import { auth, db, rtdb } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { ref, set, push } from 'firebase/database';
 import BottomNavigation from './components/BottomNavigation';
 import HomeScreen from './screens/HomeScreen';
 import ContactsScreen from './screens/ContactsScreen';
@@ -11,7 +12,7 @@ import LiveLocationScreen from './screens/LiveLocationScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import SplashScreen from './components/SplashScreen';
 import LoginScreen from './screens/LoginScreen';
-import GenderSelectorScreen from './components/GenderSelectorScreen';
+import ModeSelectorScreen from './components/ModeSelectorScreen';
 import LiveTrackingPublicScreen from './screens/LiveTrackingPublicScreen';
 import './App.css';
 
@@ -19,117 +20,165 @@ function AppContent() {
   const [showSplash, setShowSplash] = useState(true);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [gender, setGender] = useState(null);
-  const [genderLoading, setGenderLoading] = useState(false);
+  const [mode, setMode] = useState(null);
+  const [modeLoading, setModeLoading] = useState(true);
+  const [isSOSActive, setIsSOSActive] = useState(false);
   const [location, setLocation] = useState(null);
   const [isDark, setIsDark] = useState(() => {
-    const saved = localStorage.getItem('safeher-darkmode');
+    const saved = localStorage.getItem('suraksha-darkmode') || localStorage.getItem('safeher-darkmode');
     return saved === 'true';
   });
 
   const routerLocation = useLocation();
   const isPublicRoute = routerLocation.pathname.startsWith('/track');
 
-  // Auth listener
+  // Auth listener & real-time profile listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (authUser) => {
+    let unsubscribeSnapshot = null;
+    const unsubscribeAuth = onAuthStateChanged(auth, async (authUser) => {
       setUser(authUser);
-      setAuthLoading(false);
-      
       if (authUser) {
-        setGenderLoading(true);
-        try {
-          const userDoc = await getDoc(doc(db, "users", authUser.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            if (data.gender) {
-              setGender(data.gender);
+        setModeLoading(true);
+        const userRef = doc(db, "users", authUser.uid);
+        unsubscribeSnapshot = onSnapshot(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data.mode) {
+              setMode(data.mode);
+            } else if (data.gender) {
+              // Backward compatibility mapping
+              setMode(data.gender === 'female' ? 'Woman' : 'Woman');
             } else {
-              setGender(null);
+              setMode(null);
             }
-            // Load last known location from Firestore immediately
+            setIsSOSActive(!!data.isSOSActive);
+
+            // Only load fallback location from Firestore if we don't have a live GPS lock yet
             if (data.location && data.location.lat && data.location.lng) {
-              setLocation({
-                lat: data.location.lat.toFixed(6),
-                lng: data.location.lng.toFixed(6)
+              setLocation(prev => {
+                if (prev) return prev;
+                return {
+                  lat: data.location.lat.toFixed(6),
+                  lng: data.location.lng.toFixed(6)
+                };
               });
             }
           } else {
-            setGender(null);
+            setMode(null);
+            setIsSOSActive(false);
           }
-        } catch (err) {
-          console.error("Error loading user profile:", err);
-        } finally {
-          setGenderLoading(false);
-        }
+          setModeLoading(false);
+        }, (err) => {
+          console.error("Error listening to user profile:", err);
+          setModeLoading(false);
+        });
       } else {
-        setGender(null);
+        setMode(null);
+        setIsSOSActive(false);
+        setModeLoading(false);
+        if (unsubscribeSnapshot) unsubscribeSnapshot();
       }
+      setAuthLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
-  // Geolocation watch location listener (with low-accuracy fallback)
+  // Geolocation watch location listener (optimized with immediate cached location)
   useEffect(() => {
     if ("geolocation" in navigator) {
-      let watchId;
-      
-      const startWatching = (highAccuracy = true) => {
-        watchId = navigator.geolocation.watchPosition(
-          (position) => {
-            setLocation({
+      // 1. Get fast approximate/cached location immediately
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocation((prev) => {
+            if (prev) return prev;
+            return {
               lat: position.coords.latitude.toFixed(6),
               lng: position.coords.longitude.toFixed(6)
-            });
-          },
-          (error) => {
-            console.warn(`Error watching location (highAccuracy=${highAccuracy}):`, error);
-            // If high accuracy times out/fails, fallback to standard accuracy
-            if (highAccuracy) {
-              navigator.geolocation.clearWatch(watchId);
-              startWatching(false);
-            }
-          },
-          { 
-            enableHighAccuracy: highAccuracy, 
-            timeout: highAccuracy ? 8000 : 20000, 
-            maximumAge: highAccuracy ? 0 : 60000 
-          }
-        );
-      };
+            };
+          });
+        },
+        (error) => {
+          console.warn("Error getting fast cached location:", error);
+        },
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 600000 }
+      );
 
-      startWatching(true);
+      // 2. Watch for highly accurate live updates
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setLocation({
+            lat: position.coords.latitude.toFixed(6),
+            lng: position.coords.longitude.toFixed(6)
+          });
+        },
+        (error) => {
+          console.warn("Error watching location:", error);
+        },
+        { 
+          enableHighAccuracy: true, 
+          timeout: 15000, 
+          maximumAge: 0 
+        }
+      );
+
       return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
 
-  // Sync location to Firestore
+  // Sync location to Firestore & RTDB
   useEffect(() => {
     if (user && location) {
       const syncLocation = async () => {
         try {
+          const latVal = parseFloat(location.lat);
+          const lngVal = parseFloat(location.lng);
+          const isoTime = new Date().toISOString();
+
+          // 1. Sync to Firestore root
           const userRef = doc(db, "users", user.uid);
           await setDoc(userRef, {
             location: {
-              lat: parseFloat(location.lat),
-              lng: parseFloat(location.lng),
-              updatedAt: new Date().toISOString()
+              lat: latVal,
+              lng: lngVal,
+              updatedAt: isoTime
             }
           }, { merge: true });
 
+          // 2. Sync to Firestore location subcollection
           const currentLocRef = doc(db, "users", user.uid, "location", "current");
           await setDoc(currentLocRef, {
-            lat: parseFloat(location.lat),
-            lng: parseFloat(location.lng),
-            updatedAt: new Date().toISOString()
+            lat: latVal,
+            lng: lngVal,
+            updatedAt: isoTime
           });
+
+          // 3. Sync to RTDB live location (for real-time tracking)
+          await set(ref(rtdb, `users/${user.uid}/location`), {
+            lat: latVal,
+            lng: lngVal,
+            updatedAt: isoTime
+          });
+
+          // 4. Append to RTDB sosTrail if SOS is active
+          if (isSOSActive) {
+            const trailRef = ref(rtdb, `users/${user.uid}/sosTrail`);
+            await push(trailRef, {
+              lat: latVal,
+              lng: lngVal,
+              timestamp: isoTime
+            });
+          }
         } catch (err) {
-          console.error("Error syncing location to Firestore:", err);
+          console.error("Error syncing location to Firebase:", err);
         }
       };
       syncLocation();
     }
-  }, [user, location]);
+  }, [user, location, isSOSActive]);
 
   const refreshLocation = () => {
     if ("geolocation" in navigator) {
@@ -142,7 +191,6 @@ function AppContent() {
         },
         (error) => {
           console.error("Error manual-refreshing location:", error);
-          // Retry with low accuracy if manual refresh failed
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               setLocation({
@@ -165,16 +213,13 @@ function AppContent() {
     } else {
       document.documentElement.removeAttribute('data-theme');
     }
-    localStorage.setItem('safeher-darkmode', isDark);
+    localStorage.setItem('suraksha-darkmode', isDark);
   }, [isDark]);
 
+  // Set the theme color to pink/purple default for the app
   useEffect(() => {
-    if (gender === 'male') {
-      document.documentElement.setAttribute('data-gender-theme', 'blue');
-    } else {
-      document.documentElement.setAttribute('data-gender-theme', 'pink');
-    }
-  }, [gender]);
+    document.documentElement.setAttribute('data-gender-theme', 'pink');
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 3000);
@@ -195,7 +240,7 @@ function AppContent() {
     );
   }
 
-  if (authLoading || genderLoading) {
+  if (authLoading || modeLoading) {
     return (
       <div className="loading-screen">
         <Loader2 className="spinner-large" size={48} />
@@ -207,12 +252,12 @@ function AppContent() {
     return <LoginScreen />;
   }
 
-  // Enforce profile onboarding setup if gender is missing
-  if (!gender) {
+  // Enforce profile onboarding setup if mode is missing
+  if (!mode) {
     return (
-      <GenderSelectorScreen 
+      <ModeSelectorScreen 
         user={user} 
-        onGenderSelected={(selectedGender) => setGender(selectedGender)} 
+        onModeSelected={(selectedMode) => setMode(selectedMode)} 
       />
     );
   }
@@ -222,7 +267,7 @@ function AppContent() {
       <header className="app-top-bar">
         <div className="top-bar-left">
           <ShieldCheck size={22} className="icon-shield-check-apple" />
-          <span className="brand-name-apple">SafeHer</span>
+          <span className="brand-name-apple">Suraksha</span>
         </div>
         <div className="top-bar-right">
           <div className="connection-badge-apple">
@@ -239,10 +284,10 @@ function AppContent() {
 
       <div className="screen-container">
         <Routes>
-          <Route path="/" element={<HomeScreen user={user} globalLocation={location} gender={gender} />} />
+          <Route path="/" element={<HomeScreen user={user} globalLocation={location} mode={mode} updateGlobalLocation={setLocation} />} />
           <Route path="/contacts" element={<ContactsScreen user={user} />} />
           <Route path="/location" element={<LiveLocationScreen user={user} globalLocation={location} onRefreshLocation={refreshLocation} />} />
-          <Route path="/settings" element={<SettingsScreen user={user} isDark={isDark} setIsDark={setIsDark} />} />
+          <Route path="/settings" element={<SettingsScreen user={user} isDark={isDark} setIsDark={setIsDark} globalLocation={location} />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>
@@ -260,4 +305,3 @@ function App() {
 }
 
 export default App;
-

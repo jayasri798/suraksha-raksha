@@ -1,16 +1,16 @@
 import { motion } from 'framer-motion';
 import './SplashScreen.css';
 
+const sparkles = Array.from({ length: 15 }).map((_, idx) => ({
+  id: idx,
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+  delay: `${Math.random() * 2}s`,
+  duration: `${2 + Math.random() * 2}s`,
+  size: `${Math.random() * 6 + 2}px`
+}));
+
 const SplashScreen = () => {
-  // Pure Apple elegant light floating stars for a high-end feel
-  const sparkles = Array.from({ length: 15 }).map((_, idx) => ({
-    id: idx,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    delay: `${Math.random() * 2}s`,
-    duration: `${2 + Math.random() * 2}s`,
-    size: `${Math.random() * 6 + 2}px`
-  }));
 
   return (
     <div className="splash-screen">
@@ -54,13 +54,13 @@ const SplashScreen = () => {
             {/* Minimalist Solid Black Girl Silhouette centerpiece */}
             <img 
               src="/girl_silhouette.png" 
-              alt="SafeHer Logo" 
+              alt="Suraksha Logo" 
               className="splash-silhouette-img" 
             />
           </motion.div>
         </div>
 
-        <h1 className="splash-title-apple">SafeHer</h1>
+        <h1 className="splash-title-apple">Suraksha</h1>
         <p className="splash-tagline-apple">Personal Safety Companion</p>
       </motion.div>
     </div>

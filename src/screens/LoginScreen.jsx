@@ -29,12 +29,12 @@ const LoginScreen = () => {
           <div className="silhouette-logo-circle">
             <img 
               src="/girl_silhouette.png" 
-              alt="SafeHer Logo" 
+              alt="Suraksha Logo" 
               className="login-silhouette-img" 
             />
           </div>
         </div>
-        <h1 className="login-title-apple">SafeHer</h1>
+        <h1 className="login-title-apple">Suraksha</h1>
         <p className="login-tagline-apple">Personal Safety & Protection</p>
       </div>
 

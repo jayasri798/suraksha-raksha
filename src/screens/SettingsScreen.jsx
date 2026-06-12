@@ -1,28 +1,62 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { auth, db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
-import { Loader2, LogOut, ShieldCheck, Mail, Lock, MessageSquare, Eye, Info, Radio, Smartphone, Check, Cpu } from 'lucide-react';
+import { Loader2, LogOut, Mail, Lock, MessageSquare, Eye, Info, Radio, Smartphone, Check, Cpu, MapPin } from 'lucide-react';
 import './SettingsScreen.css';
 
-const SettingsScreen = ({ user }) => {
+const SettingsScreen = ({ user, globalLocation }) => {
   const [pin, setPin] = useState('0000');
   const [message, setMessage] = useState('I need urgent help! [user.displayName] is in danger! Coordinates: [LAT], [LNG]');
+  const [backupEmail, setBackupEmail] = useState('');
+  const [profileMode, setProfileMode] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  
+  // Geofencing states
+  const [safeZoneCenter, setSafeZoneCenter] = useState({ lat: 16.284583, lng: 80.457524 });
+  const [safeZoneRadius, setSafeZoneRadius] = useState(500);
+  const [leafletLoaded, setLeafletLoaded] = useState(!!window.L);
+
+  // Hardware pairing states
   const [pairingState, setPairingState] = useState('paired'); // 'paired', 'scanning', 'unpaired', 'success'
-  const [pairedId, setPairedId] = useState('SH-BRACELET-9082');
   const [deviceMobileNumber, setDeviceMobileNumber] = useState('9876543210');
   const [enteredNumber, setEnteredNumber] = useState('');
   const [scanStatus, setScanStatus] = useState('');
-  const [batteryLevel, setBatteryLevel] = useState('92%');
-  const [bleSignal, setBleSignal] = useState('LTE Signal Strong');
+  const batteryLevel = '92%';
+  const bleSignal = 'LTE Signal Strong';
   const [isDark, setIsDark] = useState(() => {
     return document.documentElement.getAttribute('data-theme') === 'dark';
   });
 
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const circleRef = useRef(null);
+
+  // Dynamic Leaflet Loading
+  useEffect(() => {
+    if (profileMode !== 'Kid') return;
+
+    if (window.L) {
+      return;
+    }
+
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    link.id = 'leaflet-css';
+    document.head.appendChild(link);
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.id = 'leaflet-js';
+    script.onload = () => setLeafletLoaded(true);
+    document.head.appendChild(script);
+  }, [profileMode]);
+
+  // Fetch Settings from Firestore
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -31,6 +65,17 @@ const SettingsScreen = ({ user }) => {
           const data = userDoc.data();
           if (data.pin) setPin(data.pin);
           if (data.message) setMessage(data.message);
+          if (data.backupEmail) setBackupEmail(data.backupEmail);
+          if (data.mode) setProfileMode(data.mode);
+          
+          if (data.safeZone) {
+            setSafeZoneCenter({ lat: data.safeZone.lat, lng: data.safeZone.lng });
+            setSafeZoneRadius(data.safeZone.radius || 500);
+          } else if (globalLocation) {
+            setSafeZoneCenter({ lat: parseFloat(globalLocation.lat), lng: parseFloat(globalLocation.lng) });
+          } else if (data.location && data.location.lat && data.location.lng) {
+            setSafeZoneCenter({ lat: data.location.lat, lng: data.location.lng });
+          }
         }
       } catch (err) {
         console.error("Error loading settings:", err);
@@ -39,7 +84,79 @@ const SettingsScreen = ({ user }) => {
       }
     };
     fetchSettings();
-  }, [user.uid]);
+  }, [user.uid, globalLocation]);
+
+  // Map Initialization
+  useEffect(() => {
+    if (!leafletLoaded || profileMode !== 'Kid' || !safeZoneCenter) return;
+    
+    const L = window.L;
+    
+    if (!mapRef.current) {
+      const map = L.map('settings-geofence-map', {
+        zoomControl: true,
+        attributionControl: false
+      }).setView([safeZoneCenter.lat, safeZoneCenter.lng], 14);
+
+      L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+      }).addTo(map);
+
+      mapRef.current = map;
+
+      // Draggable marker representing center
+      const marker = L.marker([safeZoneCenter.lat, safeZoneCenter.lng], {
+        draggable: true
+      }).addTo(map);
+
+      // Shaded circle showing radius
+      const circle = L.circle([safeZoneCenter.lat, safeZoneCenter.lng], {
+        color: '#FF375F',
+        fillColor: '#FF375F',
+        fillOpacity: 0.15,
+        radius: safeZoneRadius
+      }).addTo(map);
+
+      markerRef.current = marker;
+      circleRef.current = circle;
+
+      // Event listener for dragging marker
+      marker.on('dragend', (event) => {
+        const pos = event.target.getLatLng();
+        setSafeZoneCenter({ lat: pos.lat, lng: pos.lng });
+        circle.setLatLng(pos);
+      });
+      
+      // Click on map to reposition marker/circle
+      map.on('click', (event) => {
+        const pos = event.latlng;
+        setSafeZoneCenter({ lat: pos.lat, lng: pos.lng });
+        marker.setLatLng(pos);
+        circle.setLatLng(pos);
+      });
+
+    } else {
+      // If map is already initialized, just update marker, circle and pan
+      const map = mapRef.current;
+      const marker = markerRef.current;
+      const circle = circleRef.current;
+
+      if (marker && circle) {
+        marker.setLatLng([safeZoneCenter.lat, safeZoneCenter.lng]);
+        circle.setLatLng([safeZoneCenter.lat, safeZoneCenter.lng]);
+        circle.setRadius(safeZoneRadius);
+        map.panTo([safeZoneCenter.lat, safeZoneCenter.lng]);
+      }
+    }
+  }, [leafletLoaded, profileMode, safeZoneCenter, safeZoneRadius]);
+
+  // Update circle radius on slider change
+  useEffect(() => {
+    if (circleRef.current) {
+      circleRef.current.setRadius(safeZoneRadius);
+    }
+  }, [safeZoneRadius]);
 
   const handleInitiateSIMPairing = (e) => {
     e.preventDefault();
@@ -80,11 +197,22 @@ const SettingsScreen = ({ user }) => {
     setSuccess(false);
 
     try {
-      await setDoc(doc(db, "users", user.uid), {
+      const dataToSave = {
         pin,
         message,
-        updatedAt: new Date()
-      }, { merge: true });
+        backupEmail,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (profileMode === 'Kid' && safeZoneCenter) {
+        dataToSave.safeZone = {
+          lat: parseFloat(safeZoneCenter.lat),
+          lng: parseFloat(safeZoneCenter.lng),
+          radius: parseInt(safeZoneRadius, 10)
+        };
+      }
+
+      await setDoc(doc(db, "users", user.uid), dataToSave, { merge: true });
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -104,11 +232,18 @@ const SettingsScreen = ({ user }) => {
     setIsDark(nextDark);
     if (nextDark) {
       document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('safeher-darkmode', 'true');
+      localStorage.setItem('suraksha-darkmode', 'true');
     } else {
       document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('safeher-darkmode', 'false');
+      localStorage.setItem('suraksha-darkmode', 'false');
     }
+  };
+
+  const getModeEmoji = () => {
+    if (profileMode === 'Woman') return '👩';
+    if (profileMode === 'Elderly') return '👵';
+    if (profileMode === 'Kid') return '🧒';
+    return '👤';
   };
 
   if (loading) {
@@ -123,16 +258,12 @@ const SettingsScreen = ({ user }) => {
     <div className="settings-screen page-enter">
       {/* Profile Hero Card - Apple style */}
       <div className="glass-card settings-hero-card">
-        <div className="profile-photo-container-apple">
-          <img 
-            src="/girl_silhouette.png" 
-            alt="Profile Avatar" 
-            className="settings-profile-img-apple" 
-          />
+        <div className="profile-photo-container-apple" style={{ fontSize: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span>{getModeEmoji()}</span>
         </div>
         <h2 className="settings-profile-name-apple">{user.displayName || "Secure Profile"}</h2>
         <span className="settings-profile-email-apple">{user.email}</span>
-        <span className="badge-premium-apple guardian-profile-badge-apple">Secure Guardian Profile</span>
+        <span className="badge-premium-apple">{profileMode || 'Standard'} Mode Profile</span>
       </div>
 
       {/* Settings Form */}
@@ -164,7 +295,7 @@ const SettingsScreen = ({ user }) => {
                 <div className="device-spec-info-apple">
                   <Smartphone size={16} className="icon-device-apple" />
                   <div>
-                    <strong>SafeHer Bracelet Kit</strong>
+                    <strong>Suraksha Bracelet Kit</strong>
                     <span className="device-id-subtext">SIM Number: +91 {deviceMobileNumber.slice(0,5)} {deviceMobileNumber.slice(5)}</span>
                   </div>
                 </div>
@@ -196,7 +327,7 @@ const SettingsScreen = ({ user }) => {
           {pairingState === 'unpaired' && (
             <form onSubmit={handleInitiateSIMPairing} className="pairing-unpaired-state-apple">
               <p className="pairing-intro-text">
-                SafeHer IoT Bracelet triggers alarms directly over cellular SMS gateways. Enter your device's SIM card mobile number to link the companion.
+                Suraksha IoT Bracelet triggers alarms directly over cellular SMS gateways. Enter your device's SIM card mobile number to link the companion.
               </p>
               
               <div className="sim-input-row-apple">
@@ -251,6 +382,7 @@ const SettingsScreen = ({ user }) => {
         </div>
 
         <form onSubmit={handleSaveSettings} className="settings-form-wrapper">
+          {/* Safety PIN */}
           <div className="glass-card settings-item-card-premium">
             <div className="input-label-premium">
               <Lock size={16} className="icon-apple-settings" />
@@ -268,6 +400,23 @@ const SettingsScreen = ({ user }) => {
             <p className="settings-helper-text">Enter a 4-digit PIN to cancel false alarms</p>
           </div>
 
+          {/* Backup Alert Email field */}
+          <div className="glass-card settings-item-card-premium">
+            <div className="input-label-premium">
+              <Mail size={16} className="icon-apple-settings" />
+              <span>Backup Alert Email</span>
+            </div>
+            <input 
+              type="email" 
+              value={backupEmail}
+              onChange={(e) => setBackupEmail(e.target.value)}
+              placeholder="family@example.com"
+              className="input-field-premium"
+            />
+            <p className="settings-helper-text">Backup email where alerts are CC'd automatically</p>
+          </div>
+
+          {/* SOS Broadcast Message */}
           <div className="glass-card settings-item-card-premium">
             <div className="input-label-premium">
               <MessageSquare size={16} className="icon-apple-settings" />
@@ -281,6 +430,37 @@ const SettingsScreen = ({ user }) => {
             />
             <p className="settings-helper-text">Placeholders: [user.displayName], [LAT], [LNG] are resolved automatically on alert dispatch.</p>
           </div>
+
+          {/* Kid Mode Geofence Setting Map */}
+          {profileMode === 'Kid' && (
+            <div className="glass-card settings-item-card-premium geofence-setup-card-apple">
+              <div className="input-label-premium">
+                <MapPin size={16} className="icon-apple-settings" />
+                <span>Safe Zone Geofencing Configuration</span>
+              </div>
+              <p className="pairing-intro-text" style={{ marginBottom: '16px' }}>
+                Drag the marker or tap the map to define the Safe Zone center. Adjust the radius using the slider below.
+              </p>
+              
+              <div id="settings-geofence-map" className="settings-leaflet-map-wrapper"></div>
+              
+              <div className="radius-slider-group">
+                <div className="radius-slider-labels">
+                  <span>Safe Zone Radius:</span>
+                  <strong>{safeZoneRadius} meters</strong>
+                </div>
+                <input 
+                  type="range" 
+                  min="50" 
+                  max="2500" 
+                  step="50" 
+                  value={safeZoneRadius} 
+                  onChange={(e) => setSafeZoneRadius(parseInt(e.target.value, 10))} 
+                  className="radius-range-slider-apple"
+                />
+              </div>
+            </div>
+          )}
 
           {error && <p className="settings-error-text-apple">{error}</p>}
           {success && <p className="settings-success-text-apple">Settings saved successfully! ✅</p>}
@@ -310,7 +490,7 @@ const SettingsScreen = ({ user }) => {
             <Info size={16} className="icon-apple-about" />
             <strong>System Information</strong>
           </div>
-          <span className="about-text-bold">SafeHer Protection v1.0.0</span>
+          <span className="about-text-bold">Suraksha Protection v2.0.0</span>
           <span className="about-subtext-light">End-to-End Encrypted Satellite Relays</span>
         </div>
 

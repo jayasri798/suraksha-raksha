@@ -47,7 +47,7 @@ const GenderSelectorScreen = ({ user, onGenderSelected }) => {
             <Sparkles className="crown-sparkle" size={18} />
           </div>
           <h1 className="gender-title">One last step 👑</h1>
-          <p className="gender-subtitle">Help us personalize SafeHer for you</p>
+          <p className="gender-subtitle">Help us personalize Suraksha for you</p>
         </div>
 
         {/* Dynamic Selector Box */}
@@ -96,7 +96,7 @@ const GenderSelectorScreen = ({ user, onGenderSelected }) => {
             disabled={submitting}
           >
             {submitting ? (
-              <span className="gender-loading-spinner">Personalizing SafeHer...</span>
+              <span className="gender-loading-spinner">Personalizing Suraksha...</span>
             ) : (
               <span>Proceed to Home</span>
             )}

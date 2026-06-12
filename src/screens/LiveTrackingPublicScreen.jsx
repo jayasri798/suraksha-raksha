@@ -1,15 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { db } from '../firebase';
+import { db, rtdb } from '../firebase';
 import { doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
-import { Shield, Navigation, Compass, AlertCircle, Radio, Loader2, Award, Heart } from 'lucide-react';
+import { ref, onValue, set as setDbValue } from 'firebase/database';
+import { Shield, Navigation, Compass, AlertCircle, Radio, Loader2 } from 'lucide-react';
 import './LiveTrackingPublicScreen.css';
 
 const LiveTrackingPublicScreen = () => {
   const { userId } = useParams();
   
   // States
-  const [leafletLoaded, setLeafletLoaded] = useState(false);
+  const [leafletLoaded, setLeafletLoaded] = useState(!!window.L);
   const [userData, setUserData] = useState(null);
   const [trackedLocation, setTrackedLocation] = useState(null);
   const [guardianLocation, setGuardianLocation] = useState(null);
@@ -23,18 +24,45 @@ const LiveTrackingPublicScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Hardware Sensor States (RTDB)
+  const [fallDetected, setFallDetected] = useState(false);
+  const [soundAlert, setSoundAlert] = useState(false);
+
+  // Geofencing state (Kid mode)
+  const [isOutsideSafeZone, setIsOutsideSafeZone] = useState(false);
+
+  // Inactivity warning state (no update for 5 minutes)
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false);
+  const [inactivityMinutes, setInactivityMinutes] = useState(0);
+
   // Refs for tracking map/marker objects
   const mapRef = useRef(null);
   const userMarkerRef = useRef(null);
   const guardianMarkerRef = useRef(null);
+  const safeZoneCircleRef = useRef(null);
   const polylineRef = useRef(null);
   const lastLocationRef = useRef(null);
   const guardianWatchId = useRef(null);
 
+  // Haversine distance calculator
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371e3; // metres
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+              Math.cos(φ1) * Math.cos(φ2) *
+              Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return R * c;
+  };
+
   // Load Leaflet dynamically
   useEffect(() => {
     if (window.L) {
-      setLeafletLoaded(true);
       return;
     }
 
@@ -51,14 +79,13 @@ const LiveTrackingPublicScreen = () => {
     document.head.appendChild(script);
 
     return () => {
-      // Cleanup guardian sharing on unmount
       if (guardianWatchId.current) {
         navigator.geolocation.clearWatch(guardianWatchId.current);
       }
     };
   }, []);
 
-  // Listen to User Profile Data (name, gender, and fallback location)
+  // Listen to User Profile Data (name, mode, safeZone, and SOS flag)
   useEffect(() => {
     if (!userId) return;
 
@@ -69,7 +96,7 @@ const LiveTrackingPublicScreen = () => {
         setUserData(data);
         setIsSOSActive(!!data.isSOSActive);
         
-        // Fallback: If no location subcollection coordinates yet, parse from root profile map
+        // Fallback: If RTDB has not loaded location coordinates yet, parse from root profile map
         if (data.location && data.location.lat && data.location.lng) {
           const newLoc = {
             lat: parseFloat(data.location.lat),
@@ -79,7 +106,6 @@ const LiveTrackingPublicScreen = () => {
           setTrackedLocation(prev => prev ? prev : newLoc);
           setLoading(false);
         } else {
-          // Allow render even if location is not resolved yet, so visitor doesn't get stuck on spinner
           setLoading(false);
         }
       } else {
@@ -93,14 +119,14 @@ const LiveTrackingPublicScreen = () => {
     return () => unsubscribe();
   }, [userId]);
 
-  // Listen to Tracked Location updates from location/current subcollection
+  // Listen to live tracked location from Realtime Database (/users/{userId}/location)
   useEffect(() => {
     if (!userId) return;
 
-    const currentLocRef = doc(db, "users", userId, "location", "current");
-    const unsubscribe = onSnapshot(currentLocRef, (snapshot) => {
+    const locRef = ref(rtdb, `users/${userId}/location`);
+    const unsubscribe = onValue(locRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.data();
+        const data = snapshot.val();
         if (data.lat && data.lng) {
           const newLoc = {
             lat: parseFloat(data.lat),
@@ -127,34 +153,63 @@ const LiveTrackingPublicScreen = () => {
           lastLocationRef.current = newLoc;
           setTrackedLocation(newLoc);
           setLoading(false);
-
-          // Append to trail
-          setTrail(prev => {
-            if (prev.length > 0) {
-              const lastPoint = prev[prev.length - 1];
-              if (lastPoint[0] === newLoc.lat && lastPoint[1] === newLoc.lng) {
-                return prev;
-              }
-            }
-            return [...prev, [newLoc.lat, newLoc.lng]];
-          });
         }
       }
     }, (err) => {
-      console.error("Firestore location current sub:", err);
+      console.error("RTDB live location sub:", err);
     });
 
     return () => unsubscribe();
   }, [userId]);
 
-  // Listen to Guardian's Shared Location
+  // Listen to SOS Trail from Realtime Database (/users/{userId}/sosTrail)
+  useEffect(() => {
+    if (!userId) return;
+
+    const trailRef = ref(rtdb, `users/${userId}/sosTrail`);
+    const unsubscribe = onValue(trailRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        // Chronological sort of pushed objects
+        const points = Object.values(data)
+          .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+          .map(pt => [pt.lat, pt.lng]);
+        setTrail(points);
+      } else {
+        setTrail([]);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Listen to Companion status flags from RTDB (/users/{userId}/status)
+  useEffect(() => {
+    if (!userId) return;
+
+    const statusRef = ref(rtdb, `users/${userId}/status`);
+    const unsubscribe = onValue(statusRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        setFallDetected(!!data.fallDetected);
+        setSoundAlert(!!data.soundAlert);
+      } else {
+        setFallDetected(false);
+        setSoundAlert(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Listen to Guardian's Shared Location (Firestore fallback)
   useEffect(() => {
     if (!userId) return;
 
     const guardianLocRef = doc(db, "users", userId, "location", "guardian");
     const unsubscribe = onSnapshot(guardianLocRef, (snapshot) => {
       if (snapshot.exists()) {
-        const data = snapshot.data();
+        const data = snapshot.val ? snapshot.val() : snapshot.data();
         if (data.active !== false && data.lat && data.lng) {
           setGuardianLocation({
             lat: parseFloat(data.lat),
@@ -172,25 +227,50 @@ const LiveTrackingPublicScreen = () => {
     return () => unsubscribe();
   }, [userId]);
 
-  // Handle live updating ticker for relative update time
+  // Handle live updating ticker for relative update time & 5 minute inactivity warning
   useEffect(() => {
     const interval = setInterval(() => {
-      if (trackedLocation) {
-        const diff = Math.floor((new Date().getTime() - trackedLocation.updatedAt.getTime()) / 1000);
-        if (diff < 5) {
+      if (trackedLocation && trackedLocation.updatedAt) {
+        const diffSeconds = Math.floor((new Date().getTime() - trackedLocation.updatedAt.getTime()) / 1000);
+        
+        // Relative text ticker
+        if (diffSeconds < 5) {
           setLastUpdatedText('just now');
-        } else if (diff < 60) {
-          setLastUpdatedText(`${diff} seconds ago`);
+        } else if (diffSeconds < 60) {
+          setLastUpdatedText(`${diffSeconds} seconds ago`);
         } else {
-          const mins = Math.floor(diff / 60);
-          setLastUpdatedText(`${mins} min ${diff % 60}s ago`);
+          const mins = Math.floor(diffSeconds / 60);
+          setLastUpdatedText(`${mins} min ${diffSeconds % 60}s ago`);
+        }
+
+        // 5-minute inactivity warning banner
+        const diffMinutes = Math.floor(diffSeconds / 60);
+        if (diffMinutes >= 5) {
+          setShowInactivityWarning(true);
+          setInactivityMinutes(diffMinutes);
+        } else {
+          setShowInactivityWarning(false);
         }
       } else {
         setLastUpdatedText('awaiting GPS signal');
+        setShowInactivityWarning(false);
       }
     }, 1000);
     return () => clearInterval(interval);
   }, [trackedLocation]);
+
+  // Geofence alert check (Kid mode)
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      if (userData?.mode === 'Kid' && userData?.safeZone && trackedLocation) {
+        const { lat, lng, radius } = userData.safeZone;
+        const dist = calculateDistance(trackedLocation.lat, trackedLocation.lng, lat, lng);
+        setIsOutsideSafeZone(dist > radius);
+      } else {
+        setIsOutsideSafeZone(false);
+      }
+    });
+  }, [userData, trackedLocation]);
 
   // Set up Map, Markers and Paths when Leaflet loads
   useEffect(() => {
@@ -207,14 +287,12 @@ const LiveTrackingPublicScreen = () => {
         attributionControl: false
       }).setView([activeLat, activeLng], trackedLocation ? 16 : 14);
 
-      // Official Google Maps Cartography Tile Layer
       const googleTiles = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
       });
       googleTiles.addTo(map);
 
-      // Fallback OSM layer in case of referrer locks
       googleTiles.on('tileerror', () => {
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
           maxZoom: 19
@@ -223,29 +301,35 @@ const LiveTrackingPublicScreen = () => {
 
       mapRef.current = map;
     } else if (trackedLocation) {
-      // Pan smoothly to tracked user
       mapRef.current.panTo([trackedLocation.lat, trackedLocation.lng]);
     }
 
     const map = mapRef.current;
 
-    // 2. Draw/Update Girl Pin with Pulsing Red Ring (only if location is resolved)
+    // 2. Draw/Update user marker
     if (trackedLocation) {
-      const isFemale = userData?.gender === 'female';
-      const pinColor = isFemale ? '#FF375F' : '#007AFF';
-      const pinEmoji = isFemale ? '👧' : '👨';
+      const modeVal = userData?.mode || 'Woman';
+      let pinColor = '#FF375F'; // Woman (Pink)
+      let pinEmoji = '👩';
+      if (modeVal === 'Elderly') {
+        pinColor = '#FF9500'; // Elderly (Amber)
+        pinEmoji = '👵';
+      } else if (modeVal === 'Kid') {
+        pinColor = '#5856D6'; // Kid (Purple/Blue)
+        pinEmoji = '🧒';
+      }
 
-      const girlIconHtml = `
+      const userIconHtml = `
         <div class="custom-map-marker-wrapper">
-          <div class="pulsing-marker-ring"></div>
-          <div class="marker-avatar-core" style="background-color: ${pinColor};">
+          <div class="pulsing-marker-ring" style="border-color: ${pinColor}; background-color: ${pinColor}25;"></div>
+          <div class="marker-avatar-core" style="background-color: ${pinColor}; border: 2px solid white;">
             <span>${pinEmoji}</span>
           </div>
         </div>
       `;
 
       const userIcon = L.divIcon({
-        html: girlIconHtml,
+        html: userIconHtml,
         className: 'leaflet-custom-div-icon',
         iconSize: [46, 46],
         iconAnchor: [23, 23]
@@ -258,7 +342,7 @@ const LiveTrackingPublicScreen = () => {
       }
     }
 
-    // 3. Draw/Update Path Trail (Dotted Polyline)
+    // 3. Draw/Update Trail Path Polyline
     if (trail.length > 1) {
       if (!polylineRef.current) {
         polylineRef.current = L.polyline(trail, {
@@ -274,7 +358,7 @@ const LiveTrackingPublicScreen = () => {
       }
     }
 
-    // 4. Draw/Update Guardian Pin (if sharing active)
+    // 4. Draw/Update Guardian Pin
     if (guardianLocation) {
       const guardianIconHtml = `
         <div class="custom-map-marker-wrapper">
@@ -300,28 +384,33 @@ const LiveTrackingPublicScreen = () => {
       guardianMarkerRef.current = null;
     }
 
+    // 5. Draw/Update Safe Zone Circle (Kid mode only)
+    if (userData?.mode === 'Kid' && userData?.safeZone) {
+      const { lat, lng, radius } = userData.safeZone;
+      
+      if (!safeZoneCircleRef.current) {
+        safeZoneCircleRef.current = L.circle([lat, lng], {
+          color: '#5856D6',
+          fillColor: '#5856D6',
+          fillOpacity: 0.1,
+          radius: radius,
+          weight: 1.5,
+          dashArray: '4, 6'
+        }).addTo(map);
+      } else {
+        safeZoneCircleRef.current.setLatLng([lat, lng]);
+        safeZoneCircleRef.current.setRadius(radius);
+      }
+    } else if (safeZoneCircleRef.current) {
+      map.removeLayer(safeZoneCircleRef.current);
+      safeZoneCircleRef.current = null;
+    }
+
   }, [leafletLoaded, trackedLocation, userData, trail, guardianLocation]);
-
-  // Haversine distance calculator
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // metres
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180;
-    const Δλ = (lon2-lon1) * Math.PI/180;
-
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-    return R * c;
-  };
 
   // Toggle Geolocation for Guardian
   const handleToggleGuardianLocation = async () => {
     if (guardianSharing) {
-      // Turn Off Location Sharing
       setGuardianSharing(false);
       if (guardianWatchId.current) {
         navigator.geolocation.clearWatch(guardianWatchId.current);
@@ -389,11 +478,27 @@ const LiveTrackingPublicScreen = () => {
     }
   };
 
-  // Route in Apple Maps / Google Maps for driving instructions
   const handleNavigateToHer = () => {
     if (!trackedLocation) return;
     const url = `https://maps.google.com/?daddr=${trackedLocation.lat},${trackedLocation.lng}&dirflg=d`;
     window.open(url, '_blank');
+  };
+
+  // Clear hardware alerts
+  const handleClearFallAlert = async () => {
+    try {
+      await setDbValue(ref(rtdb, `users/${userId}/status/fallDetected`), false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleClearSoundAlert = async () => {
+    try {
+      await setDbValue(ref(rtdb, `users/${userId}/status/soundAlert`), false);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   if (loading) {
@@ -403,7 +508,7 @@ const LiveTrackingPublicScreen = () => {
           <div className="pulsing-shield-icon">
             <Shield className="logo-shield" size={40} />
           </div>
-          <h2>Accessing SafeHer Live Relay...</h2>
+          <h2>Accessing Suraksha Live Relay...</h2>
           <p>Handshaking secured satellite beacon connection</p>
           <Loader2 className="spinner-large public-spinner" size={32} />
         </div>
@@ -427,21 +532,76 @@ const LiveTrackingPublicScreen = () => {
   }
 
   const nameText = userData?.displayName ? userData.displayName.split(' ')[0] : 'User';
+  const modeVal = userData?.mode || 'Woman';
+
+  // Calculate top offset dynamically for overlap prevention
+  const bannersCount = (isSOSActive ? 1 : 0) + (showInactivityWarning ? 1 : 0) + (isOutsideSafeZone ? 1 : 0) + (fallDetected ? 1 : 0) + (soundAlert ? 1 : 0);
+  const headerTopOffset = 16 + bannersCount * 52; // spacing calculation
+
+  const getModeEmoji = () => {
+    if (modeVal === 'Woman') return '👧';
+    if (modeVal === 'Elderly') return '👵';
+    if (modeVal === 'Kid') return '🧒';
+    return '👤';
+  };
 
   return (
     <div className="public-tracker-container">
       {/* Full Screen Interactive Map Canvas */}
       <div id="live-map" className="full-screen-map-element"></div>
 
-      {/* Flashing SOS Header Overlay if active */}
-      {isSOSActive && (
-        <div className="sos-emergency-flasher-bar">
-          <span>🚨 EMERGENCY SOS ACTIVE — ACTIVE DISPATCH SIGNAL</span>
-        </div>
-      )}
+      {/* Real-time Warning Banners Stack */}
+      <div className="tracking-banners-container">
+        {isSOSActive && (
+          <div className="tracking-alert-banner danger">
+            <div className="banner-content">
+              <span>🚨</span>
+              <strong>EMERGENCY SOS ACTIVE — ACTIVE DISPATCH SIGNAL</strong>
+            </div>
+          </div>
+        )}
+        
+        {fallDetected && (
+          <div className="tracking-alert-banner danger">
+            <div className="banner-content">
+              <span>👵</span>
+              <strong>FALL DETECTED ALERT!</strong>
+            </div>
+            <button onClick={handleClearFallAlert} className="dismiss-banner-btn">Dismiss</button>
+          </div>
+        )}
+
+        {soundAlert && (
+          <div className="tracking-alert-banner danger">
+            <div className="banner-content">
+              <span>🔊</span>
+              <strong>LOUD SOUND DETECTED ALERT!</strong>
+            </div>
+            <button onClick={handleClearSoundAlert} className="dismiss-banner-btn">Dismiss</button>
+          </div>
+        )}
+
+        {isOutsideSafeZone && (
+          <div className="tracking-alert-banner danger">
+            <div className="banner-content">
+              <span>⚠️</span>
+              <strong>OUTSIDE SAFE ZONE BOUNDARY!</strong>
+            </div>
+          </div>
+        )}
+
+        {showInactivityWarning && (
+          <div className="tracking-alert-banner warning">
+            <div className="banner-content">
+              <span>⏱️</span>
+              <span>Last seen {inactivityMinutes} minutes ago — possibly stationary</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Floating Status Badges Top Right */}
-      <div className="top-badges-panel">
+      <div className="top-badges-panel" style={{ top: `${headerTopOffset}px`, transition: 'top 0.3s ease' }}>
         <div className="live-status-pill blink-live">
           <span className="live-dot">🔴</span>
           <span className="live-text">LIVE</span>
@@ -449,12 +609,12 @@ const LiveTrackingPublicScreen = () => {
       </div>
 
       {/* Cupertino Top Header Card */}
-      <div className="floating-header-panel page-enter">
+      <div className="floating-header-panel page-enter" style={{ top: `${headerTopOffset}px`, transition: 'top 0.3s ease' }}>
         <div className="header-avatar-circle">
-          <span>{userData?.gender === 'female' ? '👧' : '👨'}</span>
+          <span>{getModeEmoji()}</span>
         </div>
         <div className="header-details-col">
-          <h1 className="header-title-text">Tracking {nameText}</h1>
+          <h1 className="header-title-text">Tracking {nameText} ({modeVal})</h1>
           <div className="header-subtitle-row">
             <span className="subtitle-tag last-updated-tag">Updated {lastUpdatedText}</span>
             <span className="subtitle-tag speed-tag" data-moving={speedState.startsWith('Moving')}>
@@ -495,7 +655,7 @@ const LiveTrackingPublicScreen = () => {
           
           <button onClick={handleNavigateToHer} className="btn-control navigate-btn">
             <Navigation size={18} />
-            <span>Navigate to Her</span>
+            <span>Navigate to {nameText}</span>
           </button>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Loader2, MapPin, RefreshCw, Share2, ShieldCheck } from 'lucide-react';
 import './LiveLocationScreen.css';
 
-const LiveLocationScreen = ({ user, globalLocation, onRefreshLocation }) => {
+const LiveLocationScreen = ({ globalLocation, onRefreshLocation }) => {
   const [address, setAddress] = useState('Resolving location...');
   const [loadingAddress, setLoadingAddress] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,18 +42,20 @@ const LiveLocationScreen = ({ user, globalLocation, onRefreshLocation }) => {
   };
 
   useEffect(() => {
-    if (globalLocation) {
-      getAddressFromCoords(globalLocation.lat, globalLocation.lng);
-    } else {
-      // Resolve address for default coordinates so it matches the marker on load
-      getAddressFromCoords('16.284583', '80.457524');
-    }
+    Promise.resolve().then(() => {
+      if (globalLocation) {
+        getAddressFromCoords(globalLocation.lat, globalLocation.lng);
+      } else {
+        // Resolve address for default coordinates so it matches the marker on load
+        getAddressFromCoords('16.284583', '80.457524');
+      }
+    });
   }, [globalLocation]);
 
   const handleShareWhatsApp = () => {
     const lat = globalLocation?.lat || '16.284583';
     const lng = globalLocation?.lng || '80.457524';
-    const text = `SafeHer Alert! My live GPS coordinates are:\nLatitude: ${lat}\nLongitude: ${lng}\nLocation link: https://maps.google.com/?q=${lat},${lng}\n- Protected by SafeHer`;
+    const text = `Suraksha Alert! My live GPS coordinates are:\nLatitude: ${lat}\nLongitude: ${lng}\nLocation link: https://maps.google.com/?q=${lat},${lng}\n- Protected by Suraksha`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -74,6 +76,27 @@ const LiveLocationScreen = ({ user, globalLocation, onRefreshLocation }) => {
           <span>Active Relay</span>
         </div>
       </div>
+
+      {/* Geolocation Pending Warning Banner */}
+      {!globalLocation && (
+        <div className="location-pending-warning-banner" style={{
+          background: 'rgba(255, 149, 0, 0.1)',
+          border: '1.5px solid rgba(255, 149, 0, 0.25)',
+          color: '#FF9500',
+          padding: '14px 18px',
+          borderRadius: '16px',
+          fontSize: '13px',
+          fontWeight: '700',
+          marginBottom: '20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.02)'
+        }}>
+          <span>⚠️</span>
+          <span>Awaiting high-accuracy GPS lock. Displaying default coordinates.</span>
+        </div>
+      )}
 
       {/* Embedded Map Panel */}
       <div className="glass-card map-glass-panel">

@@ -1,12 +1,12 @@
-# SafeHer — Smart Women's Safety Companion
+# Suraksha — Smart Women's Safety Companion
 
-SafeHer is a comprehensive, low-cost women's safety ecosystem combining customized IoT hardware and a real-time responsive web application to protect women in emergency situations.
+Suraksha is a comprehensive, low-cost women's safety ecosystem combining customized IoT hardware and a real-time responsive web application to protect women in emergency situations.
 
 ---
 
 ## 1. Abstract
 
-When a user is in danger, she double-presses a hidden button on her compact SafeHer keychain device. Instantly, an emergency SOS alert is dispatched. The hardware companion transmits an emergency SMS including a custom live location tracking link to all configured emergency guardians and the police.
+When a user is in danger, she double-presses a hidden button on her compact Suraksha keychain device. Instantly, an emergency SOS alert is dispatched. The hardware companion transmits an emergency SMS including a custom live location tracking link to all configured emergency guardians and the police.
 
 Guardians click the link to launch a fully public, real-time live tracking dashboard—functioning on any phone browser without requiring login or application installations. The page displays her coordinate transitions smoothly on an interactive map, calculating movement states and drawing dotted trail lines representing historical telemetry relays.
 
@@ -34,7 +34,7 @@ Existing women's safety solutions in India exhibit critical architectural limita
 * **Price Barriers**: Safe smartwatches or premium safety trackers are expensive (varying from ₹5,000 to ₹50,000+).
 * **Daily SMS Caps**: Traditional SMS triggers often hit daily local operator limits (typically capped at 100 SMS/day).
 
-**SafeHer** resolves these critical limitations in a unified, low-power hardware and software configuration costing under ₹2,500.
+**Suraksha** resolves these critical limitations in a unified, low-power hardware and software configuration costing under ₹2,500.
 
 ---
 
@@ -74,7 +74,7 @@ Existing women's safety solutions in India exhibit critical architectural limita
   |   |   1NCE IoT SIM    |                   |    LoRa SX1278      |   |
   |   +-------------------+                   +---------+-----------+   |
   |                                                     |               |
-  |                          SAFEHER DEVICE ENCLOSURE   | Radio RF      |
+  |                          SURAKSHA DEVICE ENCLOSURE   | Radio RF      |
   +-----------------------------------------------------|---------------+
                                                         |
                                                         v
@@ -133,9 +133,9 @@ Existing women's safety solutions in India exhibit critical architectural limita
 ```
 🚨 EMERGENCY! Jayasri needs help immediately!
 📍 Current Location: https://maps.google.com/?q=16.284583,80.457524
-🗺️ Track her LIVE: https://safe-her-five.vercel.app/track/userId123
+🗺️ Track her LIVE: https://suraksha-five.vercel.app/track/userId123
 Location updates every 30 seconds automatically.
-— SafeHer Safety App
+— Suraksha Safety App
 ```
 
 ### 5.4 Live Tracking Page
@@ -249,12 +249,12 @@ RX (Receive)    =====>  GPIO7 (Software TX)
 * **Authentication**: Firebase Google Auth — secure, one-click authentication.
 * **Database**: Firebase Firestore — real-time synchronization of contact networks and profile attributes.
 * **Deployment**: Vercel — automatic CI/CD deployment pipelines linked directly to GitHub.
-* **Repository**: `github.com/jayasri798/safe-her`
-* **Live URL**: `safe-her-five.vercel.app`
+* **Repository**: `github.com/jayasri798/suraksha`
+* **Live URL**: `suraksha-five.vercel.app`
 
 ### 8.2 App Screens
 
-1. **Splash Screen**: SafeHer logo accompanied by luxurious sliding shield icons and float animation effects.
+1. **Splash Screen**: Suraksha logo accompanied by luxurious sliding shield icons and float animation effects.
 2. **Login Screen**: Secure Google Authentication dashboard configured with sleek glassmorphism panels.
 3. **Home Screen**: Gender-customized control hub (Panic SOS Double-Press Console for females; active Blue Radar Live Tracking Deck for guardians).
 4. **Contacts Screen**: Administrative form configuring up to 5 trusted emergency guardians mapped inside Firestore databases.
@@ -314,15 +314,15 @@ For fastest delivery, search these exact terms on Amazon India:
 
 ## 11. Conclusion
 
-SafeHer is a comprehensive, functional, and budget-friendly women's safety ecosystem. By marrying low-power IoT companion hardware with a premium, real-time React web application, it addresses real-world challenges that costly smartphones or high-end smartwatches fail to solve.
+Suraksha is a comprehensive, functional, and budget-friendly women's safety ecosystem. By marrying low-power IoT companion hardware with a premium, real-time React web application, it addresses real-world challenges that costly smartphones or high-end smartwatches fail to solve.
 
 The project demonstrates expertise in:
 1. **IoT & Embedded Systems**: RISC-V ESP32-C3 architecture, hardware interrupt optimizations, cellular GPRS configurations, and RF LoRa networks.
 2. **Modern Web Development**: React 19 web design, custom styling, Firebase real-time database queries, geocoding engines, and public Vercel architectures.
 
-SafeHer is not just a project—it is a functional, real-world utility engineered to genuinely secure and protect women's lives.
+Suraksha is not just a project—it is a functional, real-world utility engineered to genuinely secure and protect women's lives.
 
 ---
 
-### *SafeHer — Engineered with 💜 to protect every woman in India*
+### *Suraksha — Engineered with 💜 to protect every woman in India*
 **CSE Department | Diploma Third Year | Academic Session 2024-25**

@@ -440,3 +440,81 @@
     right: 24px;
   }
 }
+
+/* Alert banners container & items for v2 updates */
+.tracking-banners-container {
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.tracking-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-radius: 14px;
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+  animation: slideDownToast 0.4s ease-out;
+  border: 1px solid transparent;
+}
+
+.tracking-alert-banner.danger {
+  background: linear-gradient(135deg, #FF453A, #FF375F);
+  border-color: rgba(255, 69, 58, 0.3);
+}
+
+.tracking-alert-banner.warning {
+  background: linear-gradient(135deg, #FF9500, #FFCC00);
+  border-color: rgba(255, 149, 0, 0.3);
+  color: #1C1C1E;
+}
+
+.tracking-alert-banner.info {
+  background: linear-gradient(135deg, #5856D6, #AF52DE);
+  border-color: rgba(88, 86, 214, 0.3);
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dismiss-banner-btn {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.dismiss-banner-btn:hover {
+  background: white;
+  color: #1C1C1E;
+}
+
+.tracking-alert-banner.warning .dismiss-banner-btn {
+  background: rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #1C1C1E;
+}
+
+.tracking-alert-banner.warning .dismiss-banner-btn:hover {
+  background: #1C1C1E;
+  color: white;
+}
+
