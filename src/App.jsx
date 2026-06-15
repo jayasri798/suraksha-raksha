@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, Loader2 } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import { auth, db, rtdb } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
@@ -300,6 +301,7 @@ function App() {
   return (
     <Router>
       <AppContent />
+      <SpeedInsights />
     </Router>
   );
 }
